@@ -15,6 +15,10 @@
 # Hard-coded to work for:
 #        https://github.com/springone-tour-2020-cicd/go-sample-app.git (scenarios 1-5)
 #        https://github.com/springone-tour-2020-cicd/go-sample-app-ops.git (scenario 5)
+#
+# Usage examples:
+#   source git_create_branches.sh
+#   source git_create_branches.sh my-org-with-source-repos
 
 SOURCE_ORG=${1:-andreasevers}
 DEST_ORG=springone-tour-2020-cicd
@@ -40,9 +44,9 @@ function create_branch() {
   cd ..
 }
 
-rm -rf temp/git_create_branches_workdir
-mkdir -p temp/git_create_branches_workdir
-cd temp/git_create_branches_workdir
+TEMP_DIR=temp/git_create_branches_workdir
+mkdir -p $TEMP_DIR
+cd $TEMP_DIR
 
 # Move app repos to branches
 REPO=go-sample-app
@@ -55,5 +59,5 @@ REPO=go-sample-app-ops
 NUM=5
 create_branch
 
-cd ..
-#rm -rf temp/git_create_branches_workdir
+cd ../..
+#rm -rf $TEMP_DIR
