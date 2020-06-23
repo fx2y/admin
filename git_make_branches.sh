@@ -7,8 +7,11 @@ function make_branch() {
   find . -type f -name "*.yaml" -print0 | xargs -0 sed -i '' -e "s/\/$SOURCE_ORG/\/$DEST_ORG/g"
   find . -type f -name "*.yaml" -print0 | xargs -0 sed -i '' -e "s/ $SOURCE_ORG/ $DEST_ORG/g"
 
+  git add -A
+  git commit -m "Reset to scenario-$NUM-finished"
   git remote add dest https://github.com/$DEST_ORG/$REPO.git
   if [ $(git ls-remote --heads https://github.com/$DEST_ORG/$REPO.git scenario-$NUM-finished | wc -l) = 1 ]; then
+    # if branch exists, delete it before re-creating it
     git push dest :scenario-$NUM-finished
   fi
   git push -u dest master:scenario-$NUM-finished
