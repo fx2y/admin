@@ -6,16 +6,12 @@
 #   argocd
 #   kpack
 
-DEMO_HOME="${PWD}"
-DEMO_TEMP=temp/demos/cicd
-rm -rf "${DEMO_TEMP}"
-mkdir -p "${DEMO_TEMP}"
-cd "${DEMO_TEMP}"
+source aliases.sh
 
-DEMO_DEV_NS=dev
-DEMO_PROD_NS=prod
+GITLAB_NS="${GITLAB_NS:-ciberkleid}"
+IMG_NS="${IMG_NS:-ciberkleid}"
 
-# You must be connected to a cluster
+# Validate that you are connected to a cluster
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'
 if [[ $(kubectl get nodes -o jsonpath="${JSONPATH}" | grep "Ready=True") == "" ]]; then
   echo "Please log into a Kubernetes cluster and try again"
@@ -24,11 +20,11 @@ else
   echo -e "Using cluster:\n $(kubectl cluster-info)"
 fi
 
-# Deleting/recreate dev and prod namespaces
-kubectl delete ns "${DEMO_DEV_NS}"
-kubectl delete ns "${DEMO_PROD_NS}"
-kubectl create ns "${DEMO_DEV_NS}"
-kubectl create ns "${DEMO_PROD_NS}"
+# Delete/recreate dev and prod namespaces
+kubectl delete ns dev
+kubectl delete ns prod
+kubectl create ns dev
+kubectl create ns prod
 
 # Delete/reinstall Tekton
 kubectl delete ns tekton-pipelines
@@ -46,7 +42,7 @@ kubectl create ns argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 # Delete/reinstall kpack
-kubectl delete ns
+kubectl delete ns kpack
 kubectl apply -f https://github.com/pivotal/kpack/releases/download/v0.0.9/release-0.0.9.yaml
 
 

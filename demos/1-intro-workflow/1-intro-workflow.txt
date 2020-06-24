@@ -1,19 +1,16 @@
-# Setup
+@_ECHO_ON
 
-kubectl delete namespace dev
-kubectl delete namespace prod
-kubectl create namespace dev
-kubectl create namespace prod
+# Setup namespaces
+kubectl delete ns dev
+kubectl delete ns prod
+kubectl create ns dev
+kubectl create ns prod
+
 git clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go-sample-app
 
 @_ECHO_ON
 
 # Initial build & deploy
-
-# Provide your GitHub and Docker Hub namepspaces
-GITHUB_NS=
-IMG_NS=
-
 ls
 go run hello-server.go 2>&1 > /dev/null &
 curl localhost:8080
@@ -66,7 +63,7 @@ curl localhost:8080
 pkill kubectl && wait $!
 cd ..
 
-# Save workk
+# Save work
 
 hub fork --remote-name origin
 git add -A
