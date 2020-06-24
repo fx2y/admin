@@ -6,11 +6,11 @@
 #   argocd
 #   kpack
 
-SAVED_PWD="${PWD}"
-DEMO_HOME=temp/demos/cicd
-rm -rf "${DEMO_HOME}"
-mkdir -p "${DEMO_HOME}"
-cd "${DEMO_HOME}"
+DEMO_HOME="${PWD}"
+DEMO_TEMP=temp/demos/cicd
+rm -rf "${DEMO_TEMP}"
+mkdir -p "${DEMO_TEMP}"
+cd "${DEMO_TEMP}"
 
 DEMO_DEV_NS=dev
 DEMO_PROD_NS=prod

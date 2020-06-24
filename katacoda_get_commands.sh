@@ -63,7 +63,8 @@ do
   # loop through files in a scenario
   for file in $KC_ROOT_DIR/$scenario/step[1-9].md
   do
-    commands=$OUTPUT_DIR/$scenario.txt
+    mkdir -p $OUTPUT_DIR/$scenario
+    commands=$OUTPUT_DIR/$scenario/$scenario.txt
     #echo -e "Input file $file -----> Output file $commands"
     touch $commands
     get_commands $file $commands
