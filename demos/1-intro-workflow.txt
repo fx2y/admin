@@ -1,0 +1,69 @@
+#kubectl delete namespace dev
+#kubectl delete namespace prod
+
+@_ECHO_ON
+
+# Initial build & deploy
+
+# Provide your GitHub and Docker Hub namepspaces
+GITHUB_NS=
+IMG_NS=
+git clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go-sample-app
+ls
+go run hello-server.go 2>&1 > /dev/null &
+curl localhost:8080
+pkill hello-server && wait $!
+docker build . -t go-sample-app
+docker images | grep go-sample-app
+@_SKIPdocker login -u $IMG_NS
+docker tag go-sample-app $IMG_NS/go-sample-app:1.0.0
+docker push $IMG_NS/go-sample-app:1.0.0
+mkdir ops
+kubectl create deployment go-sample-app --image=$IMG_NS/go-sample-app:1.0.0 -n dev --dry-run=client -o yaml > ops/deployment.yaml
+kubectl create service clusterip go-sample-app --tcp=8080:8080 -n dev --dry-run=client -o yaml > ops/service.yaml
+cat ops/deployment.yaml
+cat ops/service.yaml
+kubectl create ns dev
+kubectl apply -f ops
+kubectl rollout status deployment/go-sample-app -n dev
+kubectl get all -n dev
+kubectl port-forward service/go-sample-app 8080:8080 -n dev 2>&1 > /dev/null &
+curl localhost:8080
+pkill kubectl && wait $!
+
+# Rebuild
+
+@_SKIPsed -i 's/world!/sunshine!/g' hello-server.go
+sed -i '' ''s/world!/sunshine!/g' hello-server.go
+docker build . -t go-sample-app -t $IMG_NS/go-sample-app:1.0.1
+docker push $IMG_NS/go-sample-app:1.0.1
+@_SKIPsed -i 's|1.0.0|1.0.1|g' ops/deployment.yaml
+sed -i '' 's|1.0.0|1.0.1|g' ops/deployment.yaml
+kubectl apply -f ops
+kubectl rollout status deployment/go-sample-app -n dev
+kubectl port-forward service/go-sample-app 8080:8080 -n dev 2>&1 > /dev/null &
+curl localhost:8080
+pkill kubectl && wait $!
+
+# Promote to prod
+
+kubectl create ns prod
+cd ops
+cp deployment.yaml deployment-prod.yaml
+cp service.yaml service-prod.yaml
+yq w -i deployment-prod.yaml "metadata.namespace" "prod"
+yq w -i service-prod.yaml "metadata.namespace" "prod"
+kubectl apply -f deployment-prod.yaml
+kubectl apply -f service-prod.yaml
+kubectl rollout status deployment/go-sample-app -n prod
+kubectl port-forward service/go-sample-app 8080:8080 -n prod 2>&1 > /dev/null &
+curl localhost:8080
+pkill kubectl && wait $!
+cd ..
+
+# Save workk
+
+hub fork --remote-name origin
+git add -A
+git commit -m 'Changes from the Intro Scenario'
+git push origin master

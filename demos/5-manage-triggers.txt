@@ -1,0 +1,309 @@
+@_ECHO_ON
+
+# Provide your GitHub and Docker Hub namepspaces
+GITHUB_NS=
+IMG_NS=
+kubectl create ns dev
+kubectl create ns prod
+git clone https://github.com/$GITHUB_NS/go-sample-app.git
+hub clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go-sample-app
+hub fork --remote-name origin
+git ls-remote --heads | grep scenario
+# Fill this in with the branch name (e.g. BRANCH=scenario-1-finished)
+BRANCH=
+git checkout --track origin/$BRANCH
+find . -name *.yaml -exec sed -i "s//springone-tour-2020-cicd//${GITHUB_NS}/g" {} +
+find . -name *.yaml -exec sed -i "s/ springone-tour-2020-cicd/ ${IMG_NS}/g" {} +
+git add -A
+git commit -m "Reset from branch $BRANCH, updated namespaces"
+git branch -m master old-master
+git branch -m $BRANCH master
+git push -f -u origin master
+git push -f origin old-master
+git branch -d old-master
+kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.13.2/release.yaml
+kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
+kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/git/git-clone.yaml
+kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/golang/lint.yaml
+kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/golang/tests.yaml
+kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/kaniko/kaniko.yaml
+# Fill this in with your GitHub login
+GITHUB_USER=
+GITHUB_USER=$GITHUB_NS
+# Fill this in with your GitHub access token
+GITHUB_TOKEN=
+kubectl create secret generic github-token --from-literal=GITHUB_TOKEN=${GITHUB_TOKEN}
+docker login -u ${IMG_NS}
+kubectl create secret generic regcred  --from-file=.dockerconfigjson=/root/.docker/config.json --type=kubernetes.io/dockerconfigjson
+cd go-sample-app/cicd/tekton
+mv build-pipeline-run.yaml build-trigger-template.yaml
+yq p -i build-trigger-template.yaml spec.resourcetemplates[+]
+{ yq m -x - build-trigger-template.yaml >tmp.yaml && mv tmp.yaml build-trigger-template.yaml; } <<EOF
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+name: build-trigger-template
+EOF
+yq m -i -x build-trigger-template.yaml - <<EOF
+spec:
+params:
+- name: REPO_URL
+description: The Git repository url to build and deploy.
+- name: REVISION
+description: The Git revision to build and deploy.
+- name: IMAGE
+description: Name and tag of the Docker container in the Deployment.
+EOF
+yq w -i build-trigger-template.yaml "spec.resourcetemplates[0].spec.params.(name==repo-url).value" "$(params.REPO_URL)"
+yq w -i build-trigger-template.yaml "spec.resourcetemplates[0].spec.params.(name==revision).value" "$(params.REVISION)"
+yq w -i build-trigger-template.yaml "spec.resourcetemplates[0].spec.params.(name==image).value" "$(params.IMAGE)"
+yq w -i build-trigger-template.yaml "spec.resourcetemplates[0].metadata.generateName" "build-pipeline-run-"
+yq d -i build-trigger-template.yaml "spec.resourcetemplates[0].metadata.name"
+yq r -C build-trigger-template.yaml
+BUILD_DATE=`date +%Y.%m.%d-%H.%M.%S`
+cat <<EOF >build-trigger-binding.yaml
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+name: build-trigger-binding
+spec:
+params:
+- name: REPO_URL
+value: $(body.repository.clone_url)
+- name: REVISION
+value: $(body.pull_request.head.sha)
+- name: IMAGE
+value: ${IMG_NS}/go-sample-app:${BUILD_DATE}
+EOF
+cat <<EOF >build-event-listener.yaml
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+name: build-event-listener
+spec:
+serviceAccountName: build-bot
+triggers:
+- name: build-trigger
+template:
+name: build-trigger-template
+bindings:
+- ref: build-trigger-binding
+EOF
+kubectl apply     -f sa.yaml     -f pv.yaml     -f pvc.yaml     -f build-pipeline.yaml     -f build-trigger-template.yaml     -f build-trigger-binding.yaml     -f build-event-listener.yaml
+kubectl rollout status deployment/el-build-event-listener
+kubectl port-forward --address 0.0.0.0 svc/el-build-event-listener 8080:8080 2>&1 > /dev/null &
+curl     -H 'X-GitHub-Event: pull_request'     -H 'Content-Type: application/json'     -d '{
+"repository": {"clone_url": "'"https://github.com/${IMG_NS}/go-sample-app"'"},
+"pull_request": {"head": {"sha": "master"}}
+}' localhost:8080
+tkn pipelinerun list
+tkn pipelinerun logs -f
+pkill kubectl && wait $!
+cd ../../..
+mkdir go-sample-app-ops
+mv go-sample-app/ops go-sample-app-ops
+mv go-sample-app/cicd go-sample-app-ops/cicd
+tree .
+sed -i "s/go-sample-app.git/go-sample-app-ops.git/g" go-sample-app-ops/cicd/argo/argo-deploy-dev.yaml
+sed -i "s/go-sample-app.git/go-sample-app-ops.git/g" go-sample-app-ops/cicd/argo/argo-deploy-prod.yaml
+cd go-sample-app
+git add -A
+git commit -m "Moved ops and tekton directories to their own repo"
+git push origin master
+cd ../go-sample-app-ops
+git init
+hub create
+git add -A
+git commit -m "Files moved from go-sample-app repo"
+git push origin master
+cd cicd/tekton
+cat <<EOF >ops-dev-task.yaml
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+name: ops-dev
+spec:
+workspaces:
+- name: source
+params:
+- name: GITHUB_TOKEN_SECRET
+type: string
+description: Name of the secret holding the github-token.
+default: github-token
+- name: GITHUB_TOKEN_SECRET_KEY
+type: string
+description: Name of the secret key holding the github-token.
+default: GITHUB_TOKEN
+- name: TAG
+type: string
+description: Name of the new image tag.
+EOF
+cat <<EOF >>ops-dev-task.yaml
+steps:
+- name: update-image-tag
+image: mikefarah/yq
+workingDir: $(workspaces.source.path)
+script: |
+cd ops/overlays/dev
+yq m -i -x kustomization.yaml - <<EOD
+images:
+- name: ${GITHUB_NS}/go-sample-app  # used for Kustomize matching
+newTag: $(params.TAG)
+EOD
+EOF
+cat <<EOF >>ops-dev-task.yaml
+- name: git-commit
+image: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.12.1
+workingDir: $(workspaces.source.path)
+script: |
+git remote set-url origin https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_NS}/go-sample-app-ops.git
+git config user.name build-bot
+git config user.email build-bot@bots.bot
+git checkout -b temp-branch
+git add ops/overlays/dev/kustomization.yaml
+git commit -m "Automatically promoting dev version"
+git checkout master
+git merge temp-branch
+git push origin master
+env:
+- name: GITHUB_TOKEN
+valueFrom:
+secretKeyRef:
+name: $(params.GITHUB_TOKEN_SECRET)
+key: $(params.GITHUB_TOKEN_SECRET_KEY)
+EOF
+yq r -C ops-dev-task.yaml
+kubectl apply -f ops-dev-task.yaml
+cat <<EOF >ops-dev-pipeline.yaml
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+name: ops-dev-pipeline
+spec:
+params:
+- name: repo-url
+type: string
+description: The Git repository URL to clone from.
+- name: revision
+type: string
+description: The Git revision to clone.
+- name: tag
+type: string
+description: The new image tag.
+- name: github-token-secret
+type: string
+description: Name of the secret holding the github-token.
+- name: github-token-secret-key
+type: string
+description: Name of the secret key holding the github-token.
+workspaces:
+- name: shared-workspace
+description: This workspace will receive the cloned git repo and be passed to the next Task.
+tasks:
+- name: fetch-repository
+taskRef:
+name: git-clone
+workspaces:
+- name: output
+workspace: shared-workspace
+params:
+- name: url
+value: $(params.repo-url)
+- name: revision
+value: $(params.revision)
+- name: deleteExisting
+value: "true"
+- name: ops-dev
+taskRef:
+name: ops-dev
+runAfter:
+- fetch-repository
+workspaces:
+- name: source
+workspace: shared-workspace
+params:
+- name: GITHUB_TOKEN_SECRET
+value: $(params.github-token-secret)
+- name: GITHUB_TOKEN_SECRET_KEY
+value: $(params.github-token-secret-key)
+- name: TAG
+value: $(params.tag)
+EOF
+yq r -C ops-dev-pipeline.yaml
+kubectl apply -f ops-dev-pipeline.yaml
+cat <<EOF >ops-dev-trigger-template.yaml
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+name: ops-dev-trigger-template
+spec:
+resourcetemplates:
+- apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+generateName: ops-dev-pipeline-run-
+spec:
+pipelineRef:
+name: ops-dev-pipeline
+workspaces:
+- name: shared-workspace
+persistentvolumeclaim:
+claimName: workspace-pvc
+params:
+- name: tag
+value: $(params.tag)
+- name: repo-url
+value: https://github.com/${GITHUB_NS}/go-sample-app-ops.git
+- name: revision
+value: master
+- name: github-token-secret
+value: github-token
+- name: github-token-secret-key
+value: GITHUB_TOKEN
+serviceAccountName: build-bot
+params:
+- name: tag
+description: Tag of the new Docker image.
+EOF
+yq r -C ops-dev-trigger-template.yaml
+kubectl apply -f ops-dev-trigger-template.yaml
+BUILD_DATE=`date +%Y.%m.%d-%H.%M.%S`
+cat <<EOF >ops-dev-trigger-binding.yaml
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+name: ops-dev-trigger-binding
+spec:
+params:
+- name: tag
+value: $(body.push_data.tag)
+EOF
+cat <<EOF >ops-dev-event-listener.yaml
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+name: ops-dev-event-listener
+spec:
+serviceAccountName: build-bot
+triggers:
+- name: ops-dev-trigger
+template:
+name: ops-dev-trigger-template
+bindings:
+- ref: ops-dev-trigger-binding
+EOF
+kubectl apply -f ops-dev-trigger-template.yaml -f ops-dev-trigger-binding.yaml -f ops-dev-event-listener.yaml
+kubectl rollout status deployment/el-ops-dev-event-listener
+kubectl port-forward --address 0.0.0.0 svc/el-ops-dev-event-listener 8080:8080 2>&1 > /dev/null &
+curl     -H 'Content-Type: application/json'     -d '{
+"push_data": {
+"tag": "1.0.1"
+}
+}' localhost:8080
+tkn pipelinerun list
+tkn pipelinerun logs -f
+pkill kubectl && wait $!
+git add -A
+git commit -m 'Changes from the Triggers scenario'
+git pull origin master --rebase
+git push origin master
