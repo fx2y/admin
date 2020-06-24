@@ -8,6 +8,8 @@
 
 source aliases.sh
 
+PATH=~/workspace/demorunner/bin:$PATH
+
 GITLAB_NS="${GITLAB_NS:-ciberkleid}"
 IMG_NS="${IMG_NS:-ciberkleid}"
 
