@@ -1,12 +1,7 @@
-```
 # Provide your GitHub user or org name
 GITHUB_NS=
-```{{copy}}
-```
 # Provide your Docker Hub user or org name
 IMG_NS=
-```{{copy}}
-```
 # Install Tekton CRDs
 kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.13.2/release.yaml
 kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
@@ -19,49 +14,25 @@ kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/gola
 
 # Install new buildpacks Task to build image
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/buildpacks/buildpacks-v3.yaml
-```{{execute}}
-```
 docker login -u ${IMG_NS}
-```{{execute}}
-```
 kubectl create secret generic regcred  --from-file=.dockerconfigjson=/root/.docker/config.json --type=kubernetes.io/dockerconfigjson
-```{{execute}}
-```
 kubectl create ns dev
 kubectl create ns prod
-```{{execute}}
-```
 git clone https://github.com/$GITHUB_NS/go-sample-app.git
 git clone https://github.com/$GITHUB_NS/go-sample-app-ops.git
-```{{execute}}
-```
 hub clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go-sample-app
 hub fork --remote-name origin
-```{{execute}}
-```
 BRANCH=scenario-5-finished
 git checkout --track origin/$BRANCH
-```{{execute}}
-```
 find . -name *.yaml -exec sed -i "s//springone-tour-2020-cicd//${GITHUB_NS}/g" {} +
 find . -name *.yaml -exec sed -i "s/ springone-tour-2020-cicd/ ${IMG_NS}/g" {} +
-```{{execute}}
-```
 git add -A
 git commit -m "Reset from branch $BRANCH, updated namespaces"
-```{{execute}}
-```
 git branch -m master scenario-1-start
 git branch -m $BRANCH master
-```{{execute}}
-```
 git push -f -u origin master
-```{{execute}}
-```
 git push -f origin scenario-1-start
 git branch -d scenario-1-start
-```{{execute}}
-```
 cd ..
 hub clone https://github.com/springone-tour-2020-cicd/go-sample-app-ops.git && cd go-sample-app-ops
 hub fork --remote-name origin
@@ -76,42 +47,22 @@ git push -f -u origin master
 git push -f origin scenario-1-start
 git branch -d scenario-1-start
 cd ..
-```{{execute}}
-```
 cd go-sample-app
 cat Dockerfile
-```{{execute}}
-```
 pack set-default-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
 
 pack build $IMG_NS/go-sample-app:pack-0.0.1 --publish
-```{{execute}}
-```
 docker images | grep paketo
-```{{execute}}
-```
 docker pull gcr.io/paketo-buildpacks/run:0.0.19-base-cnb
 docker images | grep paketo
-```{{execute}}
-```
 docker tag gcr.io/paketo-buildpacks/run:0.0.19-base-cnb gcr.io/paketo-buildpacks/run:base-cnb
 docker images | grep paketo
-```{{execute}}
-```
 pack rebase $IMG_NS/go-sample-app:pack-0.0.1 --publish --no-pull
-```{{execute}}
-```
 cd /workspace/go-sample-app-ops/cicd/tekton
-```{{execute}}
-```
 yq d -i build-pipeline.yaml "spec.tasks.(name==verify-digest)"
 yq d -i build-pipeline.yaml "spec.tasks.(name==build-image)"
 yq d -i build-pipeline.yaml "spec.params.(name==image)"
-```{{execute}}
-```
 yq d -i build-trigger-template.yaml 'spec.resourcetemplates[0].spec.params.(name==image)'
-```{{execute}}
-```
 yq m -i -a build-pipeline.yaml - <<EOF
 spec:
 tasks:
@@ -135,16 +86,12 @@ outputs:
 - name: image
 resource: build-image
 EOF
-```{{execute}}
-```
 yq m -i build-pipeline.yaml - <<EOF
 spec:
 resources:
 - name: build-image
 type: image
 EOF
-```{{execute}}
-```
 cat <<EOF >buildpacks-cache-pv.yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -176,8 +123,6 @@ resources:
 requests:
 storage: 500Mi
 EOF
-```{{execute}}
-```
 yq m -i build-trigger-template.yaml - <<EOF
 spec:
 resourcetemplates:
@@ -204,53 +149,25 @@ params:
 - name: url
 value: ${IMG_NS}/go-sample-app:1.0.3
 EOF
-```{{execute}}
-```
 tkn task list
 tkn pipeline list
-```{{execute}}
-```
 kubectl apply -f sa.yaml               -f pv.yaml               -f pvc.yaml               -f buildpacks-cache-pv.yaml               -f buildpacks-cache-pvc.yaml               -f buildpacks-app-image.yaml
-```{{execute}}
-```
 kubectl apply -f build-pipeline.yaml               -f build-trigger-template.yaml               -f build-trigger-binding.yaml               -f build-event-listener.yaml
-```{{execute}}
-```
 kubectl rollout status deployment/el-build-event-listener
-```{{execute}}
-```
 kubectl port-forward --address 0.0.0.0 svc/el-build-event-listener 8080:8080 2>&1 > /dev/null &
-```{{execute}}
-```
 curl     -H 'X-GitHub-Event: pull_request'     -H 'Content-Type: application/json'     -d '{
 "repository": {"clone_url": "'"https://github.com/${GITHUB_NS}/go-sample-app"'"},
 "pull_request": {"head": {"sha": "master"}}
 }' localhost:8080
-```{{execute}}
-```
 tkn pipelinerun list
 tkn pipelinerun logs -f
-```{{execute}}
-```
 pkill kubectl && wait $!
-```{{execute}}
-```
 kubectl apply -f https://github.com/pivotal/kpack/releases/download/v0.0.9/release-0.0.9.yaml
-```{{execute}}
-```
 kubectl get all -n kpack
-```{{execute}}
-```
 kubectl api-resources --api-group build.pivotal.io
-```{{execute}}
-```
 kubectl get builders,builds,clusterbuilders,images,sourceresolvers --all-namespaces
-```{{execute}}
-```
 mkdir ../kpack
 cd ../kpack
-```{{execute}}
-```
 cat <<EOF >builder.yaml
 apiVersion: build.pivotal.io/v1alpha1
 kind: Builder
@@ -259,8 +176,6 @@ name: paketo-builder
 spec:
 image: gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
 EOF
-```{{execute}}
-```
 cat <<EOF >image.yaml
 apiVersion: build.pivotal.io/v1alpha1
 kind: Image
@@ -278,23 +193,11 @@ url: https://github.com/$GITHUB_NS/go-sample-app
 revision: master
 tag: $IMG_NS/go-sample-app:kpack-0.0.1
 EOF
-```{{execute}}
-```
 kubectl apply -f builder.yaml               -f image.yaml
-```{{execute}}
-```
 kubectl get builds
-```{{execute}}
-```
 kubectl describe build go-sample-app-build-1-<uuid>
-```{{copy}}
-```
 kubectl get pods | grep go-sample-app-build-
-```{{execute}}
-```
 logs -image go-sample-app -build 1
-```{{execute}}
-```
 cd /workspace/go-sample-app
 
 sed -i 's/sunshine/friends/g' hello-server.go
@@ -302,8 +205,6 @@ sed -i 's/sunshine/friends/g' hello-server.go
 git add -A
 git commit -m "Hello, friends!"
 git push origin master
-```{{execute}}
-```
 cd /workspace/go-sample-app-ops/cicd/kpack
 
 cat <<EOF >custom-builder.yaml
@@ -349,28 +250,13 @@ order:
 - group:
 - id: paketo-buildpacks/procfile
 EOF
-```{{execute}}
-```
 kubectl apply -f custom-builder.yaml
-```{{execute}}
-```
 yq w -i image.yaml "spec.builder.kind" CustomBuilder
 yq w -i image.yaml "spec.builder.name" paketo-custom-builder
-```{{execute}}
-```
 kubectl apply -f image.yaml
-```{{execute}}
-```
 kubectl get builds
-```{{execute}}
-```
 kubectl describe build go-sample-app-build-<num>-<uuid>
-```{{copy}}
-```
 logs -image go-sample-app -build <num>
-```{{copy}}
-```
 sed -i 's/run:0.0.19-base-cnb/run:0.0.20-base-cnb/g' custom-builder.yaml
 
 kubectl apply -f custom-builder.yaml
-```{{execute}}

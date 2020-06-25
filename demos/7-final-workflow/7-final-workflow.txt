@@ -1,49 +1,24 @@
-```
 # Provide your GitHub user or org name
 GITHUB_NS=
-```{{copy}}
-```
 # Provide your Docker Hub user or org name
 IMG_NS=
-```{{copy}}
-```
 kubectl create ns dev
 kubectl create ns prod
-```{{execute}}
-```
 git clone https://github.com/$GITHUB_NS/go-sample-app.git
 git clone https://github.com/$GITHUB_NS/go-sample-app-ops.git
-```{{execute}}
-```
 hub clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go-sample-app
-```{{execute}}
-```
 hub fork --remote-name origin
-```{{execute}}
-```
 BRANCH=scenario-6-finished
 git checkout --track origin/$BRANCH
-```{{execute}}
-```
 find . -name *.yaml -exec sed -i "s//springone-tour-2020-cicd//${GITHUB_NS}/g" {} +
 find . -name *.yaml -exec sed -i "s/ springone-tour-2020-cicd/ ${IMG_NS}/g" {} +
-```{{execute}}
-```
 git add -A
 git commit -m "Reset from branch $BRANCH, updated namespaces"
-```{{execute}}
-```
 git branch -m master scenario-1-start
 git branch -m $BRANCH master
-```{{execute}}
-```
 git push -f -u origin master
-```{{execute}}
-```
 git push -f origin scenario-1-start
 git branch -d scenario-1-start
-```{{execute}}
-```
 cd ..
 hub clone https://github.com/springone-tour-2020-cicd/go-sample-app-ops.git && cd go-sample-app-ops
 hub fork --remote-name origin
@@ -58,8 +33,6 @@ git push -f -u origin master
 git push -f origin scenario-1-start
 git branch -d scenario-1-start
 cd ..
-```{{execute}}
-```
 # Install Tekton CRDs
 kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.13.2/release.yaml
 kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
@@ -68,25 +41,15 @@ kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/latest/
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/git/git-clone.yaml
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/golang/lint.yaml
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/golang/tests.yaml
-```{{execute}}
-```
 docker login -u ${IMG_NS}
-```{{execute}}
-```
 kubectl create secret generic regcred  --from-file=.dockerconfigjson=/root/.docker/config.json --type=kubernetes.io/dockerconfigjson
-```{{execute}}
-```
 kubectl apply -f https://github.com/pivotal/kpack/releases/download/v0.0.9/release-0.0.9.yaml
-```{{execute}}
-```
 yq d -i build-pipeline.yaml "spec.tasks.(name==build-image)"
 yq d -i build-pipeline.yaml "spec.resources"
 yq d -i build-pipeline.yaml "spec.params.(name==image)"
 yq d -i build-trigger-binding.yaml "spec.params.(name==IMAGE)"
 yq d -i build-trigger-template.yaml "spec.params.(name==IMAGE)"
 yq d -i build-trigger-template.yaml "spec.resourcetemplates[0].spec.params"
-```{{execute}}
-```
 yq m -i -a build-pipeline.yaml - <<EOF
 spec:
 tasks:
@@ -108,16 +71,12 @@ value: master
 - name: deleteExisting
 value: "true"
 EOF
-```{{execute}}
-```
 yq m -i -a build-pipeline.yaml - <<EOF
 spec:
 workspaces:
 - name: shared-ops-workspace
 description: This workspace will receive the cloned Git ops repo and be passed to the next Task.
 EOF
-```{{execute}}
-```
 yq m -i build-trigger-template.yaml - <<EOF
 spec:
 resourcetemplates:
@@ -130,22 +89,12 @@ claimName: workspace-pvc
 persistentvolumeclaim:
 claimName: workspace-pvc
 EOF
-```{{execute}}
-```
 GITHUB_USER=$GITHUB_NS
-```{{execute}}
-```
 # Fill this in with your GitHub login
 GITHUB_USER=
-```{{copy}}
-```
 # Fill this in with your GitHub access token
 GITHUB_TOKEN=
-```{{copy}}
-```
 kubectl create secret generic github-token --from-literal=GITHUB_TOKEN=${GITHUB_TOKEN}
-```{{execute}}
-```
 cd /workspace/go-sample-app-ops/cicd/tekton
 
 cat <<EOF >update-image-revision-task.yaml
@@ -197,12 +146,8 @@ secretKeyRef:
 name: $(params.GITHUB_TOKEN_SECRET)
 key: $(params.GITHUB_TOKEN_SECRET_KEY)
 EOF
-```{{execute}}
-```
 yq r -C update-image-revision-task.yaml
 kubectl apply -f update-image-revision-task.yaml
-```{{execute}}
-```
 yq m -i -a build-pipeline.yaml - <<EOF
 spec:
 params:
@@ -231,11 +176,7 @@ value: $(params.github-token-secret-key)
 - name: REVISION
 value: $(params.revision)
 EOF
-```{{execute}}
-```
 yq r -C build-pipeline.yaml
-```{{execute}}
-```
 yq m -i build-trigger-template.yaml - <<EOF
 spec:
 resourcetemplates:
@@ -250,14 +191,8 @@ value: github-token
 - name: github-token-secret-key
 value: GITHUB_TOKEN
 EOF
-```{{execute}}
-```
 yq r -C build-trigger-template.yaml
-```{{execute}}
-```
 kubectl apply -f .
-```{{execute}}
-```
 cd ../argo
 cat <<EOF >argo-deploy-image.yaml
 apiVersion: argoproj.io/v1alpha1
@@ -276,8 +211,6 @@ targetRevision: HEAD
 syncPolicy:
 automated: {}
 EOF
-```{{execute}}
-```
 cat <<EOF >argo-deploy-tekton.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -295,103 +228,56 @@ targetRevision: HEAD
 syncPolicy:
 automated: {}
 EOF
-```{{execute}}
-```
 git add -A
 git commit -m 'Changes from the Buildpacks scenario'
 git push origin master
-```{{execute}}
-```
 kubectl create ns dev
 kubectl create ns prod
 kubectl create ns argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 kubectl apply -f . -n argocd
-```{{execute}}
-```
 yq m <(kubectl get cm argocd-cm -o yaml -n argocd) <(cat << EOF
 data:
 kustomize.buildOptions: --load_restrictor none
 EOF
 ) | kubectl apply -f -
-```{{execute}}
-```
 cd ../tekton
 kubectl apply -f .
-```{{execute}}
-```
 cd /workspace/go-sample-app
 sed -i 's/sunshine/pipeline/g' hello-server.go
 git add hello-server.go
 git commit -m "Hello pipeline!"
 git push
-```{{execute}}
-```
 SHA=$(git rev-parse origin/master)
-```{{execute}}
-```
 kubectl rollout status deployment/el-build-event-listener
 kubectl rollout status deployment/el-ops-dev-event-listener
-```{{execute}}
-```
 kubectl port-forward --address 0.0.0.0 svc/el-build-event-listener 8081:8080 2>&1 > /dev/null &
-```{{execute}}
-```
 curl     -H 'X-GitHub-Event: pull_request'     -H 'Content-Type: application/json'     -d '{
 "repository": {"clone_url": "'"https://github.com/${IMG_NS}/go-sample-app"'"},
 "pull_request": {"head": {"sha": "'"${SHA}"'"}}
 }' localhost:8081
-```{{execute}}
-```
 tkn pipelinerun list
 tkn pipelinerun logs -f
-```{{execute}}
-```
 kubectl get builds
-```{{execute}}
-```
 kubectl describe build $(kubectl get builds -o yaml | yq r - "items[-1].metadata.name")
-```{{execute}}
-```
 kubectl describe build $(kubectl get builds -o yaml | yq r - "items[-1].metadata.name") | grep Revision
-```{{execute}}
-```
 BUILD_NR=$(kubectl get builds -o yaml | yq r - "items[-1].metadata.labels.[image.build.pivotal.io/buildNumber]")
 logs -image go-sample-app -build $BUILD_NR
-```{{execute}}
-```
 kubectl port-forward --address 0.0.0.0 svc/el-ops-dev-event-listener 8082:8080 2>&1 > /dev/null &
-```{{execute}}
-```
 TAG=$(logs -image go-sample-app -build $BUILD_NR | grep kpack- | grep index.docker.io | cut -d ":" -f2)
 echo $TAG
-```{{execute}}
-```
 curl    -H 'Content-Type: application/json'    -d '{
 "push_data": {
 "tag": "'"${TAG}"'"
 }
 }' localhost:8082
-```{{execute}}
-```
 tkn pipelinerun list
 tkn pipelinerun logs -f
-```{{execute}}
-```
 kubectl get deploy -n dev
 
 kubectl rollout status deployment/dev-go-sample-app -n dev
-```{{execute}}
-```
 kubectl port-forward service/dev-go-sample-app 8083:8080 -n dev 2>&1 > /dev/null &
-```{{execute}}
-```
 curl localhost:8083
-```{{execute}}
-```
 kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server -o name | cut -d'/' -f 2
-```{{execute}}
-```
 kubectl port-forward --address 0.0.0.0 svc/argocd-server 8080:80 -n argocd 2>&1 > /dev/null &
-```{{execute}}
