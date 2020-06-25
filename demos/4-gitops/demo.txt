@@ -36,8 +36,8 @@ curl localhost:8081
 kill
 
 argocd app set go-sample-app-dev --sync-policy automated
-
-yq m -i -x ops/overlays/dev/kustomization.yaml - <<EOF
+cd ../../ops/overlays/dev
+yq m -i -x kustomization.yaml - <<EOF
 images:
 - name: ${IMG_NS}/go-sample-app  # used for Kustomize matching
 newTag: 1.0.0
@@ -50,8 +50,8 @@ k port-forward svc/go-sample-app 8081:8080 &
 curl localhost:8081
 kill
 
-#echo "namePrefix: dev-" >> ops/overlays/dev/kustomization.yaml
-yq w -i ops/overlays/dev/kustomization.yaml namePrefix dev-
+#echo "namePrefix: dev-" >> kustomization.yaml
+yq w -i kustomization.yaml namePrefix dev-
 git commit -am 'Add prefix dev-'
 git push origin master
 argocd app list
@@ -59,27 +59,23 @@ argocd app get go-sample-app-dev
 # Hit Prune Sync in UI
 argocd app get go-sample-app-dev
 
+cd ../../../cicd
+cp -r $DEMO/argocd/cicd/argo argo
+tree .
+cd argon
 
+yqc argo-deploy-dev.yaml
+yqc argo-deploy-prod.yaml
 
-cat <<EOF >argo-deploy-dev.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-name: go-sample-app-dev
-EOF
-
-echo "$(argocd app get go-sample-app-dev -o yaml | yq r - spec | yq p - spec)" >> argo-deploy-dev.yaml
-sed 's/dev/prod/g' argo-deploy-dev.yaml > argo-deploy-prod.yaml
-yq r -C argo-deploy-prod.yaml
-k apply -f argo-deploy-prod.yaml -n argocd
-k rollout status deployment/prod-go-sample-app -n prod
-k port-forward service/prod-go-sample-app 8081:8080 -n prod 2>&1 > /dev/null &
-APP_PID=$!
+kns argocd
+k apply -f argo-deploy-prod.yaml
+kns prod
+k rollout status deploy/prod-go-sample-app
+k port-forward service/prod-go-sample-app 8081:8080 &
 curl localhost:8081
-k logs $(k get pods -n prod -o jsonpath="{.items[0].metadata.name}") -n prod
-kill ${APP_PID} && wait $!
+k get pods
+k logs
+kill
+
 argocd app set go-sample-app-prod --self-heal
-k delete deploy prod-go-sample-app -n prod
-git add -A
-git commit -m 'Changes from the Argo CD scenario'
-git push origin master
+k delete deploy prod-go-sample-app
