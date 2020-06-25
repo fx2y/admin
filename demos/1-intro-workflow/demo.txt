@@ -1,25 +1,35 @@
-@_ECHO_ON
+@_ECHO_OFF
 
 # Setup namespaces
-kubectl delete ns dev
-kubectl delete ns prod
-kubectl create ns dev
-kubectl create ns prod
+#kubectl delete ns dev; kubectl delete ns prod
+#kubectl create ns dev; kubectl create ns prod
 
+rm -rf cd go-sample-app
 git clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go-sample-app
 
+# Check which process is on port 8080:
+#lsof -i :8080 | grep LISTEN
+
+clear
 @_ECHO_ON
 
-# Initial build & deploy
+@_ECHO_# Sample app
 ls
 go run hello-server.go 2>&1 > /dev/null &
 curl localhost:8080
 pkill hello-server && wait $!
+
+environment=sandbox; go run hello-server.go
+
+@_ECHO_# Build with Dockerfile
+
 docker build . -t go-sample-app
 docker images | grep go-sample-app
-@_SKIPdocker login -u $IMG_NS
+
 docker tag go-sample-app $IMG_NS/go-sample-app:1.0.0
 docker push $IMG_NS/go-sample-app:1.0.0
+
+
 mkdir ops
 kubectl create deployment go-sample-app --image=$IMG_NS/go-sample-app:1.0.0 -n dev --dry-run=client -o yaml > ops/deployment.yaml
 kubectl create service clusterip go-sample-app --tcp=8080:8080 -n dev --dry-run=client -o yaml > ops/service.yaml
@@ -33,7 +43,7 @@ kubectl port-forward service/go-sample-app 8080:8080 -n dev 2>&1 > /dev/null &
 curl localhost:8080
 pkill kubectl && wait $!
 
-# Rebuild
+@_ECHO_# Rebuild
 
 @_SKIPsed -i 's/world!/sunshine!/g' hello-server.go
 sed -i '' ''s/world!/sunshine!/g' hello-server.go
@@ -47,7 +57,7 @@ kubectl port-forward service/go-sample-app 8080:8080 -n dev 2>&1 > /dev/null &
 curl localhost:8080
 pkill kubectl && wait $!
 
-# Promote to prod
+@_ECHO_# Promote to prod
 
 kubectl create ns prod
 cd ops
@@ -63,7 +73,7 @@ curl localhost:8080
 pkill kubectl && wait $!
 cd ..
 
-# Save work
+@_ECHO_# Save work
 
 hub fork --remote-name origin
 git add -A
