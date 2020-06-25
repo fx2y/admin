@@ -16,7 +16,8 @@ scenarios="1-intro-workflow
 3-tekton
 4-argocd
 5-manage-triggers
-6-buildpacks"
+6-buildpacks
+7-final-workflow"
 
 OUTPUT_DIR=temp/katacoda_get_commands_output
 rm -rf $OUTPUT_DIR

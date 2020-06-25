@@ -50,14 +50,15 @@ cd $TEMP_DIR
 
 # Move app repos to branches
 REPO=go-sample-app
-for NUM in $(seq 1 5); do
+for NUM in $(seq 1 6); do
   create_branch
 done
 
-# Move app-ops repo to branch
+# Move ops repos to branches
 REPO=go-sample-app-ops
-NUM=5
-create_branch
+for NUM in $(seq 5 6); do
+  create_branch
+done
 
 cd ../..
 #rm -rf $TEMP_DIR
