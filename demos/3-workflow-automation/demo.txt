@@ -1,0 +1,50 @@
+@_ECHO_ON
+
+k api-resources --api-group='tekton.dev'
+tkn task list
+
+cp -r $DEMO/tekton/cicd .
+tree .
+cd cicd/tekton
+yqc pv.yaml
+yqc pvc.yaml
+kns tekton-pipelines
+k apply -f pv.yaml -f pvc.yaml
+k get pvc
+k get secrets -n default
+yqc sa.yaml
+k apply -f sa.yaml
+
+yqc build-pipeline.yaml
+
+# Go to https://github.com/tektoncd/catalog
+
+k apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/git/git-clone.yaml
+k apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/golang/lint.yaml
+k apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/golang/tests.yaml
+k apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/kaniko/kaniko.yaml
+tkn task list
+
+# Observe parameters and placeholders in the Tasks on GitHub
+
+k apply -f build-pipeline.yaml
+
+yqc build-pipeline-run.yaml
+k apply -f build-pipeline-run.yaml
+
+tkn pipelineruns list
+tkn pr describe build-pipeline-run
+
+# Automate triggering
+
+yqc build-event-listener.yaml
+yqc build-trigger-template.yaml
+yqc build-trigger-binding.yaml
+
+rm build-pipeline-run.yaml
+
+k apply -f .
+
+tkn el list
+tkn tt list
+tkn tb list

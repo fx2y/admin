@@ -1,0 +1,85 @@
+@_ECHO_ON
+
+kns argocd
+k get all
+k api-resources --api-group argoproj.io
+k get apps,appprojs
+k port-forward svc/argocd-server 8080:80 2>&1 > /dev/null &
+k get pods
+argocd login localhost:8080 --insecure --username admin
+
+git add -A
+git commit -m "Initial commit"
+git push
+
+# GENERAL
+# Application Name: go-sample-app-dev
+# Project: default
+# SOURCE
+# Repository URL: https://github.com/<GITHUB_NS>/go-sample-app.git
+# Revision: HEAD
+# Path: ops/overlays/dev
+# DESTINATION
+# Cluster: https://kubernetes.default.svc
+# Namespace: dev
+
+## Sync and review the application
+
+## Explore the deployment
+
+kns dev
+k get all
+k get endpoints
+k get endpointslice
+k port-forward service/go-sample-app 8081:8080 &
+curl localhost:8081
+kill
+
+argocd app set go-sample-app-dev --sync-policy automated
+
+yq m -i -x ops/overlays/dev/kustomization.yaml - <<EOF
+images:
+- name: ${IMG_NS}/go-sample-app  # used for Kustomize matching
+newTag: 1.0.0
+EOF
+
+git commit -am "Switched back to 1.0.0"
+git push
+k rollout status deploy/go-sample-app
+k port-forward svc/go-sample-app 8081:8080 &
+curl localhost:8081
+kill
+
+#echo "namePrefix: dev-" >> ops/overlays/dev/kustomization.yaml
+yq w -i ops/overlays/dev/kustomization.yaml namePrefix dev-
+git commit -am 'Add prefix dev-'
+git push origin master
+argocd app list
+argocd app get go-sample-app-dev
+# Hit Prune Sync in UI
+argocd app get go-sample-app-dev
+
+
+
+cat <<EOF >argo-deploy-dev.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+name: go-sample-app-dev
+EOF
+
+echo "$(argocd app get go-sample-app-dev -o yaml | yq r - spec | yq p - spec)" >> argo-deploy-dev.yaml
+sed 's/dev/prod/g' argo-deploy-dev.yaml > argo-deploy-prod.yaml
+yq r -C argo-deploy-prod.yaml
+k apply -f argo-deploy-prod.yaml -n argocd
+k rollout status deployment/prod-go-sample-app -n prod
+k port-forward service/prod-go-sample-app 8081:8080 -n prod 2>&1 > /dev/null &
+APP_PID=$!
+curl localhost:8081
+k logs $(k get pods -n prod -o jsonpath="{.items[0].metadata.name}") -n prod
+kill ${APP_PID} && wait $!
+argocd app set go-sample-app-prod --self-heal
+k delete deploy prod-go-sample-app -n prod
+git add -A
+git commit -m 'Changes from the Argo CD scenario'
+git push origin master

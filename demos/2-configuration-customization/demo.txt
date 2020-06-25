@@ -1,0 +1,40 @@
+clear
+@_ECHO_ON
+
+@_ECHO_# Remove duplication
+
+catd deployment.yaml deployment-prod.yaml
+catd service.yaml service-prod.yaml
+cd ..
+rm -rf ops
+cp -r $DEMO/kustomize/ops .
+tree .
+cd ops/base
+yqc deployment.yaml
+yqc service.yaml
+
+cd ../overlays/dev
+yqc kustomization.yaml
+kns dev
+kustomize build --load_restrictor none .
+kustomize build --load_restrictor none . | kubectl apply -f -
+k get all
+kns prod
+cd ../prod
+yqc kustomization.yaml
+yqc env_patch.yaml
+yqc healthcheck_patch.yaml
+yqc memorylimit_patch.yaml
+yqc kustomization.yaml
+kustomize build --load_restrictor none . | kubectl delete -f -
+kustomize build --load_restrictor none . | kubectl apply -f -
+k get all
+k rollout status deploy/prod-go-sample-app
+k delete deploy go-sample-app
+k delete svc go-sample-app
+
+k get all --show-labels
+k describe pod
+k logs
+
+cd ../../..

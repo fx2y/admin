@@ -10,6 +10,9 @@
 # You also need the following tools installed locally:
 # tkn cli
 # kustomize cli
+# argocd cli
+# jq
+# base64
 # yq (mikefarah)
 
 source aliases.sh
@@ -19,6 +22,8 @@ PATH=~/workspace/demorunner/bin:$PATH
 GITLAB_NS="${GITLAB_NS:-ciberkleid}"
 GITHUB_NS="${GITHUB_NS:-ciberkleid}"
 IMG_NS="${IMG_NS:-ciberkleid}"
+GITHUB_USER=${GITHUB_USER:-ciberkleid}
+GITHUB_TOKEN=${GITHUB_TOKEN}
 
 # Validate that you are connected to a cluster
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'
@@ -49,6 +54,11 @@ kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/buil
 kubectl delete ns argocd
 kubectl create ns argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+yq m <(kubectl get cm argocd-cm -o yaml -n argocd) <(cat << EOF
+data:
+  kustomize.buildOptions: --load_restrictor none
+EOF
+) | kubectl apply -f -
 
 # Delete/reinstall kpack
 kubectl delete ns kpack
@@ -57,3 +67,31 @@ kubectl apply -f https://github.com/pivotal/kpack/releases/download/v0.0.9/relea
 # Get the demo-files
 git clone git@github.com:springone-tour-2020-cicd/demo-files.git
 DEMO=${PWD}/demo-files
+
+# Install the Docker Hub secret
+docker login -u $IMG_NS
+
+touch config.json
+storetype=$(jq -r .credsStore < ~/.docker/config.json)
+(
+    echo '{'
+    echo '    "auths": {'
+    for registry in $(docker-credential-$storetype list | jq -r 'to_entries[] | .key' | grep index.docker.io); do
+        if [ ! -z $FIRST ]; then
+            echo '        },'
+        fi
+        FIRST=true
+        credential=$(echo $registry | docker-credential-$storetype get | jq -jr '"\(.Username):\(.Secret)"' | base64)
+        echo '        "'$registry'": {'
+        echo '            "auth": "'$credential'"'
+    done
+    echo '        }'
+    echo '    }'
+    echo '}'
+) > config.json
+kubectl create secret generic regcred --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson -n tekton-pipelines
+rm -f config.json
+
+
+# Install the GitHub token secret
+kubectl create secret generic github-token --from-literal=GITHUB_TOKEN=${GITHUB_TOKEN} -n tekton-pipelines
