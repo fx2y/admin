@@ -23,3 +23,8 @@ setBatLang ""
 # batd .dockerignore .dockerignore2
 # To use default language detection, set to empty string:
 # setBatLang
+
+#brew install colordiff
+# catd - like diff, but side-by-side and colored
+catdf() { colordiff -yW"`tput cols`" ${1} ${2}; }
+alias catd=catdf
