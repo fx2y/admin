@@ -14,6 +14,8 @@ clear
 @_ECHO_ON
 
 @_ECHO_# Sample app
+# Initial build
+
 ls
 go run hello-server.go 2>&1 > /dev/null &
 curl localhost:8080
@@ -29,46 +31,49 @@ docker images | grep go-sample-app
 docker tag go-sample-app $IMG_NS/go-sample-app:1.0.0
 docker push $IMG_NS/go-sample-app:1.0.0
 
+# Initial deploy
 
 mkdir ops
 kubectl create deployment go-sample-app --image=$IMG_NS/go-sample-app:1.0.0 -n dev --dry-run=client -o yaml > ops/deployment.yaml
-kubectl create service clusterip go-sample-app --tcp=8080:8080 -n dev --dry-run=client -o yaml > ops/service.yaml
-cat ops/deployment.yaml
-cat ops/service.yaml
-kubectl create ns dev
-kubectl apply -f ops
-kubectl rollout status deployment/go-sample-app -n dev
-kubectl get all -n dev
-kubectl port-forward service/go-sample-app 8080:8080 -n dev 2>&1 > /dev/null &
+k create service clusterip go-sample-app --tcp=8080:8080 -n dev --dry-run=client -o yaml > ops/service.yaml
+bat ops/deployment.yaml
+bat ops/service.yaml
+k apply -f ops
+k rollout status deployment/go-sample-app -n dev
+k get all -n dev
+k port-forward service/go-sample-app 8080:8080 -n dev 2>&1 > /dev/null &
 curl localhost:8080
 pkill kubectl && wait $!
 
 @_ECHO_# Rebuild
 
 @_SKIPsed -i 's/world!/sunshine!/g' hello-server.go
-sed -i '' ''s/world!/sunshine!/g' hello-server.go
+sed -i '' 's/world/sunshine/g' hello-server.go
 docker build . -t go-sample-app -t $IMG_NS/go-sample-app:1.0.1
 docker push $IMG_NS/go-sample-app:1.0.1
 @_SKIPsed -i 's|1.0.0|1.0.1|g' ops/deployment.yaml
 sed -i '' 's|1.0.0|1.0.1|g' ops/deployment.yaml
-kubectl apply -f ops
-kubectl rollout status deployment/go-sample-app -n dev
-kubectl port-forward service/go-sample-app 8080:8080 -n dev 2>&1 > /dev/null &
+k apply -f ops
+k rollout status deployment/go-sample-app -n dev
+k port-forward service/go-sample-app 8080:8080 -n dev 2>&1 > /dev/null &
 curl localhost:8080
 pkill kubectl && wait $!
 
 @_ECHO_# Promote to prod
 
-kubectl create ns prod
+cp -r $DEMO/intro/ops .
+tree .
 cd ops
+bat deployment.yaml
+bat service.yaml
 cp deployment.yaml deployment-prod.yaml
 cp service.yaml service-prod.yaml
 yq w -i deployment-prod.yaml "metadata.namespace" "prod"
 yq w -i service-prod.yaml "metadata.namespace" "prod"
-kubectl apply -f deployment-prod.yaml
-kubectl apply -f service-prod.yaml
-kubectl rollout status deployment/go-sample-app -n prod
-kubectl port-forward service/go-sample-app 8080:8080 -n prod 2>&1 > /dev/null &
+k apply -f deployment-prod.yaml
+k apply -f service-prod.yaml
+k rollout status deployment/go-sample-app -n prod
+k port-forward service/go-sample-app 8080:8080 -n prod 2>&1 > /dev/null &
 curl localhost:8080
 pkill kubectl && wait $!
 cd ..

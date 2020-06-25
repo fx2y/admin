@@ -1,10 +1,5 @@
 @_ECHO_ON
 
-# Provide your GitHub and Docker Hub namepspaces
-GITHUB_NS=
-IMG_NS=
-kubectl create ns dev
-kubectl create ns prod
 git clone https://github.com/$GITHUB_NS/go-sample-app.git
 hub clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go-sample-app
 hub fork --remote-name origin
@@ -21,6 +16,10 @@ git branch -m $BRANCH master
 git push -f -u origin master
 git push -f origin old-master
 git branch -d old-master
+
+
+
+
 cd go-sample-app/ops
 diff -b deployment.yaml deployment-prod.yaml
 diff -b service.yaml service-prod.yaml
@@ -28,17 +27,17 @@ rm *-prod.yaml
 mkdir base
 mv *.yaml base
 ls base
-sed -i '/namespace: dev/d' base/*.yaml
+sed -i '' '/namespace: dev/d' base/*.yaml
 mkdir -p overlays/dev
 cd overlays/dev
 touch kustomization.yaml
 kustomize edit add base ../../base/deployment.yaml
 kustomize edit add base ../../base/service.yaml
 kustomize edit set namespace dev
-cat kustomization.yaml
+bat kustomization.yaml
 kustomize build --load_restrictor none .
 kustomize build --load_restrictor none . | kubectl apply -f -
-kubectl get all -n dev
+k get all -n dev
 cd ..
 mkdir prod
 cd prod
@@ -47,76 +46,31 @@ kustomize edit add base ../../base/deployment.yaml
 kustomize edit add base ../../base/service.yaml
 kustomize edit set namespace prod
 kustomize build --load_restrictor none . | kubectl apply -f -
-kubectl get all -n prod
-tree /workspace/go-sample-app/ops
+k get all -n prod
+tree ../..
 kustomize edit set nameprefix 'prod-'
 kustomize build --load_restrictor none . | grep prod-
 kustomize build --load_restrictor none . | kubectl apply -f -
 
-kubectl rollout status deployment/prod-go-sample-app -n prod
-kubectl get all -n prod
-kubectl delete deployment go-sample-app -n prod
-kubectl delete service go-sample-app -n prod
-cat <<EOF >patch.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-name: go-sample-app
-spec:
-template:
-spec:
-containers:
-- name: go-sample-app
-env:
-- name: environment
-value: production
-EOF
-kustomize edit add patch patch.yaml
+k rollout status deployment/prod-go-sample-app -n prod
+k get all -n prod
+k delete deployment go-sample-app -n prod
+k delete service go-sample-app -n prod
 
-cat kustomization.yaml
+# Add an environment variable
+cp $DEMO/kustomize/ops/overlays/prod/patch.yaml .
+bat patch.yaml
+kustomize edit add patch patch.yaml
+bat kustomization.yaml
 kustomize build --load_restrictor none . | kubectl apply -f -
 
 kubectl rollout status deployment/prod-go-sample-app -n prod
 kubectl logs $(kubectl get pods -n prod -o jsonpath="{.items[0].metadata.name}") -n prod
-cat <<EOF >memorylimit_patch.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-name: go-sample-app
-spec:
-template:
-spec:
-containers:
-- name: go-sample-app
-resources:
-limits:
-memory: 256Mi
-requests:
-memory: 256Mi
-EOF
-cat <<EOF >healthcheck_patch.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-name: go-sample-app
-spec:
-template:
-spec:
-containers:
-- name: go-sample-app
-livenessProbe:
-httpGet:
-path: /
-port: 8080
-initialDelaySeconds: 4
-periodSeconds: 3
-readinessProbe:
-initialDelaySeconds: 4
-periodSeconds: 10
-httpGet:
-path: /
-port: 8080
-EOF
+
+cp $DEMO/kustomize/ops/overlays/prod/memorylimit_patch.yaml
+bat memorylimit_patch.yaml
+cp $DEMO/kustomize/ops/overlays/prod/healthcheck_patch.yaml
+bat healthcheck_patch.yaml
 kustomize edit add patch memorylimit_patch.yaml
 kustomize edit add patch healthcheck_patch.yaml
 kustomize build --load_restrictor none . | kubectl apply -f -

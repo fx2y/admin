@@ -6,11 +6,18 @@
 #   argocd
 #   kpack
 
+
+# You also need the following tools installed locally:
+# tkn cli
+# kustomize cli
+# yq (mikefarah)
+
 source aliases.sh
 
 PATH=~/workspace/demorunner/bin:$PATH
 
 GITLAB_NS="${GITLAB_NS:-ciberkleid}"
+GITHUB_NS="${GITHUB_NS:-ciberkleid}"
 IMG_NS="${IMG_NS:-ciberkleid}"
 
 # Validate that you are connected to a cluster
@@ -47,5 +54,6 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 kubectl delete ns kpack
 kubectl apply -f https://github.com/pivotal/kpack/releases/download/v0.0.9/release-0.0.9.yaml
 
-
-
+# Get the demo-files
+git clone git@github.com:springone-tour-2020-cicd/demo-files.git
+DEMO=${PWD}/demo-files
