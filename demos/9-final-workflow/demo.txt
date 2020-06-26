@@ -1,0 +1,52 @@
+cd ../tekton
+
+cp -ri $DEMO/final-workflow/cicd/tekton .
+
+yqc update-image-revision-task.yaml
+kns tekton-pipelines
+k apply -f update-image-revision-task.yaml
+
+yqc build-pipeline.yaml
+yqc build-trigger-template.yaml
+k apply -f .
+
+cd ../argo
+
+yqc argo-deploy-image.yaml
+yqc argo-deploy-tekton.yaml
+
+git add -A
+git commit -m 'Changes from the Buildpacks scenario'
+git push origin master
+
+kns argocd
+k apply -f
+
+# Test it out
+
+cd ../../../go-sample-app
+sed -i '' 's/Hello, pack/Hello, s1t/g' hello-server.go
+git add hello-server.go
+git commit -m "Hello Spring One Tour"
+git push
+
+kns tekton-pipelines
+tkn pipelinerun list
+tkn pipelinerun logs -f
+
+kns default
+k get builds
+k describe build
+
+logs -image go-sample-app -build
+
+tkn pipelinerun list
+tkn pipelinerun logs -f
+
+kns dev
+k get deploy
+
+k port-forward svc/dev-go-sample-app 8083:8080 &
+curl localhost:8083
+
+# Argo UI

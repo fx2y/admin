@@ -1,8 +1,3 @@
-# PREP
-# brew install tektoncd-cli
-source ~/.aliases
-clear
-
 @_ECHO_ON
 jx edit pipelineusername
 
