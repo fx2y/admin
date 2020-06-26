@@ -1,0 +1,126 @@
+
+k get all -n kpack
+k api-resources --api-group build.pivotal.io
+k get bldr,bld,clstbldr,img,sourceresolvers -A
+cd -
+cd ..
+cp -ri $DEMO/kpack/cicd/kpack .
+cd kpack
+ls -l
+
+yqc builder.yaml
+yqc image.yaml
+
+kns default
+k apply -f builder.yaml -f image.yaml
+
+k get builds
+k describe build go-sample-app-build-1-<uuid>
+k get pods
+
+logs -image go-sample-app -build 1
+
+pack suggest-stacks
+pack inspect-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
+
+yqc -d 0 custom-builder.yaml
+yqc -d 1 custom-builder.yaml
+yqc -d 2 custom-builder.yaml
+k apply -f custom-builder.yaml
+k get custombuilder
+
+## Build images
+
+catd image.yaml image-1.yaml
+catd image-1.yaml image-2.yaml
+
+k apply -f image-1.yaml -f image-2.yaml -f image-3.yaml
+k get builds
+k describe build
+logs -image go-sample-app-1 -build 1
+
+## Rebase images
+
+sed -i '' 's/run:0.0.19-base-cnb/run:0.0.20-base-cnb/g' custom-builder.yaml
+k apply -f custom-builder.yaml
+logs -image go-sample-app-1 -build 2
+kubectl describe build
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+cd ../tekton
+
+update-image-revision-task.yaml
+
+yqc update-image-revision-task.yaml
+
+kubectl apply -f update-image-revision-task.yaml
+
+yqc build-pipeline.yaml
+
+yqc build-trigger-template.yaml
+
+kubectl apply -f .
+
+cd ../kpack
+
+builder.yaml
+
+kubectl apply -f builder.yaml
+
+cd ../argo
+
+argo-deploy-image.yaml
+
+argo-deploy-tekton.yaml
+
+git add -A
+git commit -m 'Changes from the Buildpacks scenario'
+git push origin master
+
+k apply -f . -n argocd
+
+cd ../tekton
+
+kubectl apply -f .
+
+cd /workspace/go-sample-app
+sed -i 's/sunshine/pipeline/g' hello-server.go
+
+git add hello-server.go
+git commit -m "Hello pipeline!"
+git push
+
+tkn pipelinerun list
+tkn pipelinerun logs -f
+k get builds
+
+logs -image go-sample-app -build
+
+tkn pipelinerun list
+tkn pipelinerun logs -f
+kubectl get deploy -n dev
+
+k port-forward service/dev-go-sample-app 8083:8080 -n dev 2>&1 > /dev/null &
+curl localhost:8083

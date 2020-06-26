@@ -16,6 +16,7 @@
 # yq (mikefarah)
 # hub cli
 # pack cli
+# logs cli
 
 source aliases.sh
 
@@ -94,6 +95,7 @@ storetype=$(jq -r .credsStore < ~/.docker/config.json)
     echo '}'
 ) > config.json
 kubectl create secret generic regcred --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson -n tekton-pipelines
+kubectl create secret generic regcred --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson -n default
 rm -f config.json
 
 # get token to be able to talk to Docker Hub
