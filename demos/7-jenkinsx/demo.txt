@@ -1,0 +1,44 @@
+# PREP
+# brew install tektoncd-cli
+source ~/.aliases
+clear
+
+@_ECHO_ON
+jx edit pipelineusername
+
+# DEMO
+k get deploy
+jx ui -p 8080 2>&1 > /dev/null &
+JX_PID=$!
+jx get env
+jx create quickstart
+# Open repository in GitHub.com
+# Take a look at the main.go file
+# Explain quickstart:
+# - Language detection => Dockerfile creation
+# - jenkins-x.yaml file creation
+# - Helm charts added
+jx get activity -f jenkinsx-s1t-2020 -w
+tkn pr list
+jx get build logs
+# Select jenkinsx-s1t-2020/master #1, go through log steps
+# Open GitHub again, check out release 0.0.1
+# Back in logs, click on PR for staging repository
+jx get build logs
+# Select staging/master #1, go through log steps
+cd jenkinsx-s1t-2020
+g checkout -b s1t
+idea .
+# Change title in main.go
+# Open jenkins-x.yml and point out buildpacks
+# https://github.com/jenkins-x-buildpacks/jenkins-x-kubernetes/tree/master/packs
+# Add pipelineConfig.pipelines.pullRequest.preBuild.steps[0].container: busybox|command: echo|args[0]."s1t 2020"
+g commit -am "s1t improvement"
+g push origin s1t
+# Open GitHub again, create PR for s1t branch
+jx get applications
+# Open staging for the app
+jx get build logs
+# Select jenkinsx-s1t-2020/pr-1 #1
+# Once finished, open GitHub again, take another look at the PR
+jx promote jenkinsx-s1t-2020 --version 0.0.2 --env production

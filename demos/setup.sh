@@ -14,6 +14,8 @@
 # jq
 # base64
 # yq (mikefarah)
+# hub cli
+# pack cli
 
 source aliases.sh
 
@@ -21,9 +23,11 @@ PATH=~/workspace/demorunner/bin:$PATH
 
 GITLAB_NS="${GITLAB_NS:-ciberkleid}"
 GITHUB_NS="${GITHUB_NS:-ciberkleid}"
-IMG_NS="${IMG_NS:-ciberkleid}"
 GITHUB_USER=${GITHUB_USER:-ciberkleid}
+IMG_NS="${IMG_NS:-ciberkleid}"
 GITHUB_TOKEN=${GITHUB_TOKEN}
+DOCKERHUB_USER=${DOCKERHUB_USER:-ciberkleid}
+DOCKERHUB_PWD=${DOCKERHUB_PWD}
 
 # Validate that you are connected to a cluster
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'
@@ -92,6 +96,14 @@ storetype=$(jq -r .credsStore < ~/.docker/config.json)
 kubectl create secret generic regcred --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson -n tekton-pipelines
 rm -f config.json
 
+# get token to be able to talk to Docker Hub
+DOCKERHUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${DOCKERHUB_USER}'", "password": "'${DOCKERHUB_PWD}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
 
 # Install the GitHub token secret
 kubectl create secret generic github-token --from-literal=GITHUB_TOKEN=${GITHUB_TOKEN} -n tekton-pipelines
+
+# Make the webhook scripts executable
+mv ~/repos/springonetour2020/admin/demos/3-workflow-automation/create_github_webhook.sh ${HOME}/create_github_webhook.sh
+mv ~/repos/springonetour2020/admin/demos/5-automatic-deployment/create_dockerhub_webhook.sh ${HOME}/create_dockerhub_webhook.sh
+chmod +x ${HOME}/create_github_webhook.sh
+chmod +x ${HOME}/create_dockerhub_webhook.sh

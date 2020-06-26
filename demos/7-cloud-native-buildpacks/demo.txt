@@ -1,0 +1,108 @@
+@_ECHO_ON
+
+cat Dockerfile
+
+pack set-default-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
+pack build $IMG_NS/go-sample-app:pack-0.0.1 --publish
+docker images | grep paketo
+docker pull gcr.io/paketo-buildpacks/run:0.0.19-base-cnb
+docker images | grep paketo
+docker tag gcr.io/paketo-buildpacks/run:0.0.19-base-cnb gcr.io/paketo-buildpacks/run:base-cnb
+docker images | grep paketo
+pack rebase $IMG_NS/go-sample-app:pack-0.0.1 --publish --no-pull
+
+cd ../go-sample-app-ops/cicd/tekton
+cp -ri $DEMO/cloud-native-buildpacks/cicd/tekton/ .
+ls -l
+
+yqc build-pipeline.yaml
+yqc build-trigger-template.yaml
+yqc build-trigger-binding.yaml
+yqc buildpacks-cache-pvc.yaml
+yqc buildpacks-app-image.yaml
+
+k apply -f .
+
+cd ../../../go-sample-app
+sed -i '' 's/pipeline/pack/g' hello-server.go
+git commit -am "Hello pack"
+git push
+
+tkn pipelinerun list
+tkn pipelinerun logs -f
+
+# kpack
+
+kubectl get all -n kpack
+kubectl api-resources --api-group build.pivotal.io
+kubectl get builders,builds,clusterbuilders,images,sourceresolvers --all-namespaces
+mkdir -p /workspace/go-sample-app-ops/cicd/kpack
+cd /workspace/go-sample-app-ops/cicd/kpack
+
+builder.yaml
+
+image.yaml
+
+kubectl apply -f builder.yaml -f image.yaml
+
+kubectl get builds
+kubectl describe build go-sample-app-build-1-<uuid>
+kubectl get pods
+
+logs -image go-sample-app -build 1
+
+cd ../tekton
+
+update-image-revision-task.yaml
+
+yqc update-image-revision-task.yaml
+
+kubectl apply -f update-image-revision-task.yaml
+
+yqc build-pipeline.yaml
+
+yqc build-trigger-template.yaml
+
+kubectl apply -f .
+
+cd ../kpack
+
+builder.yaml
+
+kubectl apply -f builder.yaml
+
+cd ../argo
+
+argo-deploy-image.yaml
+
+argo-deploy-tekton.yaml
+
+git add -A
+git commit -m 'Changes from the Buildpacks scenario'
+git push origin master
+
+k apply -f . -n argocd
+
+cd ../tekton
+
+kubectl apply -f .
+
+cd /workspace/go-sample-app
+sed -i 's/sunshine/pipeline/g' hello-server.go
+
+git add hello-server.go
+git commit -m "Hello pipeline!"
+git push
+
+tkn pipelinerun list
+tkn pipelinerun logs -f
+k get builds
+
+logs -image go-sample-app -build
+
+tkn pipelinerun list
+tkn pipelinerun logs -f
+kubectl get deploy -n dev
+
+k port-forward service/dev-go-sample-app 8083:8080 -n dev 2>&1 > /dev/null &
+curl localhost:8083

@@ -1,0 +1,6 @@
+@_ECHO_ON
+
+kns prod
+argocd app set prod-go-sample-app --self-heal
+k delete deploy prod-go-sample-app
+k get deploy

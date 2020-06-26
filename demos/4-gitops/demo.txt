@@ -8,10 +8,6 @@ k port-forward svc/argocd-server 8080:80 2>&1 > /dev/null &
 k get pods
 argocd login localhost:8080 --insecure --username admin
 
-git add -A
-git commit -m "Initial commit"
-git push
-
 # GENERAL
 # Application Name: go-sample-app-dev
 # Project: default
@@ -31,21 +27,17 @@ kns dev
 k get all
 k get endpoints
 k get endpointslice
-k port-forward service/go-sample-app 8081:8080 &
+k port-forward svc/go-sample-app 8081:8080 &
 curl localhost:8081
 kill
 
-argocd app set go-sample-app-dev --sync-policy automated
+argocd app set dev-go-sample-app --sync-policy automated
 cd ../../ops/overlays/dev
-yq m -i -x kustomization.yaml - <<EOF
-images:
-- name: ${IMG_NS}/go-sample-app  # used for Kustomize matching
-newTag: 1.0.0
-EOF
+sed -i '' 's|1.0.1|1.0.0|g' kustomization.yaml
 
 git commit -am "Switched back to 1.0.0"
 git push
-k rollout status deploy/go-sample-app
+k get pods
 k port-forward svc/go-sample-app 8081:8080 &
 curl localhost:8081
 kill
@@ -55,14 +47,14 @@ yq w -i kustomization.yaml namePrefix dev-
 git commit -am 'Add prefix dev-'
 git push origin master
 argocd app list
-argocd app get go-sample-app-dev
+argocd app get dev-go-sample-app
 # Hit Prune Sync in UI
-argocd app get go-sample-app-dev
+argocd app get dev-go-sample-app
 
 cd ../../../cicd
 cp -r $DEMO/argocd/cicd/argo argo
 tree .
-cd argon
+cd argo
 
 yqc argo-deploy-dev.yaml
 yqc argo-deploy-prod.yaml
@@ -70,12 +62,8 @@ yqc argo-deploy-prod.yaml
 kns argocd
 k apply -f argo-deploy-prod.yaml
 kns prod
-k rollout status deploy/prod-go-sample-app
-k port-forward service/prod-go-sample-app 8081:8080 &
+k rollout status deploy/prod-go-sample-app # TODO: Might need to figure out if this is actually working (maybe immutable labels or requires pruning)
+k get rs
+k port-forward svc/prod-go-sample-app 8081:8080 &
 curl localhost:8081
-k get pods
-k logs
 kill
-
-argocd app set go-sample-app-prod --self-heal
-k delete deploy prod-go-sample-app

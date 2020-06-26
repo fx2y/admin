@@ -47,11 +47,9 @@ pkill kubectl
 
 @_ECHO_# Rebuild
 
-@_SKIPsed -i 's/world!/sunshine!/g' hello-server.go
 sed -i '' 's/world/sunshine/g' hello-server.go
-docker build . -t go-sample-app -t $IMG_NS/go-sample-app:1.0.1 # TODO: why two tags?
+docker build . -t $IMG_NS/go-sample-app:1.0.1 # TODO: why two tags?
 docker push $IMG_NS/go-sample-app:1.0.1
-@_SKIPsed -i 's|1.0.0|1.0.1|g' ops/deployment.yaml
 sed -i '' 's|1.0.0|1.0.1|g' ops/deployment.yaml
 k apply -f ops
 k rollout status deploy/go-sample-app
