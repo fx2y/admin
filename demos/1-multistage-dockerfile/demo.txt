@@ -1,10 +1,7 @@
 @_ECHO_OFF
 
-# Setup namespaces
-#kubectl delete ns dev; kubectl delete ns prod
-#kubectl create ns dev; kubectl create ns prod
-
-rm -rf cd go-sample-app
+cd ~/workspace-demo
+rm -rf go-sample-app
 git clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go-sample-app
 
 # Check which process is on port 8080:
@@ -13,16 +10,16 @@ git clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go
 clear
 @_ECHO_ON
 
-@_ECHO_# Sample app
+# Sample app
 
 ls
 go run hello-server.go 2>&1 > /dev/null &
 curl localhost:8080
 pkill hello-server && wait $!
 
-environment=sandbox; go run hello-server.go
+export environment=sandbox; go run hello-server.go
 
-@_ECHO_# Build with Dockerfile
+# Build with Dockerfile
 
 docker build . -t go-sample-app
 docker images | grep go-sample-app
@@ -30,7 +27,7 @@ docker images | grep go-sample-app
 docker tag go-sample-app $IMG_NS/go-sample-app:1.0.0
 docker push $IMG_NS/go-sample-app:1.0.0
 
-@_ECHO_# Initial deploy
+# Initial deploy
 
 cp -r $DEMO/intro/ops .
 tree .
@@ -45,7 +42,7 @@ k port-forward svc/go-sample-app 8080 &
 curl localhost:8080
 pkill kubectl
 
-@_ECHO_# Rebuild
+# Rebuild
 
 sed -i '' 's/world/sunshine/g' hello-server.go
 docker build . -t $IMG_NS/go-sample-app:1.0.1 # TODO: why two tags?
@@ -57,7 +54,7 @@ k port-forward svc/go-sample-app 8080 &
 curl localhost:8080
 pkill kubectl
 
-@_ECHO_# Promote to prod
+# Promote to prod
 
 cp deployment.yaml deployment-prod.yaml
 cp service.yaml service-prod.yaml

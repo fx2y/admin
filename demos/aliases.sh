@@ -1,3 +1,4 @@
+#!/bin/bash
 promptcol="$(tput sgr0)$(tput setaf 220)"
 cmdcol="$(tput sgr0)$(tput bold)"
 normalcol="$(tput sgr0)"
@@ -5,7 +6,6 @@ trap 'echo -n "$normalcol"' DEBUG
 PS1="\n\[$promptcol\]\w\$ \[$cmdcol\]"
 
 alias cdd="cd ${PWD}"
-
 
 # Generate args to highlight changed lines for bat
 BAT_LANG=""
@@ -28,7 +28,6 @@ setBatLang ""
 # catd - like diff, but side-by-side and colored
 catdf() { colordiff -yW"`tput cols`" ${1} ${2}; }
 alias catd=catdf
-
-alias yqc=yq r -C
-
+alias yqc="yq r -C"
 alias tree="tree -C"
+alias cicd1="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/1-multistage-dockerfile/demo.txt"

@@ -1,5 +1,4 @@
 cd ../tekton
-
 cp -ri $DEMO/final-workflow/cicd/tekton .
 
 yqc update-image-revision-task.yaml
@@ -10,7 +9,14 @@ yqc build-pipeline.yaml
 yqc build-trigger-template.yaml
 k apply -f .
 
+cd ../kpack
+cp -ri $DEMO/final-workflow/cicd/kpack .
+
+yqc image.yaml
+k apply -f .
+
 cd ../argo
+cp -ri $DEMO/final-workflow/cicd/argo .
 
 yqc argo-deploy-image.yaml
 yqc argo-deploy-tekton.yaml
