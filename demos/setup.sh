@@ -27,19 +27,12 @@ WHITE="\033[38;5;15m"
 # logs cli
 
 source ${ADMIN}/demos/aliases.sh
+source ${ADMIN}/demos/session.sh
 
 cd ~/workspace-demo
 rm -rf ~/workspace-demo/*
 git clone git@github.com:mgbrodi/demorunner.git ~/workspace-demo/demorunner
 PATH=~/workspace-demo/demorunner:$PATH
-
-GITLAB_NS="${GITLAB_NS:-ciberkleid}"
-GITHUB_NS="${GITHUB_NS:-ciberkleid}"
-GITHUB_USER=${GITHUB_USER:-ciberkleid}
-IMG_NS="${IMG_NS:-ciberkleid}"
-GITHUB_TOKEN=${GITHUB_TOKEN}
-DOCKERHUB_PWD=${DOCKERHUB_PWD}
-DOCKERHUB_USER=${DOCKERHUB_USER:-ciberkleid}
 
 echo -e "${YELLOW}###### Validate that you are connected to a cluster"
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'
