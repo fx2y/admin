@@ -1,3 +1,5 @@
+clear
+cd ~/workspace-demo/go-sample-app
 @_ECHO_ON
 
 cat Dockerfile
@@ -24,9 +26,10 @@ yqc buildpacks-app-image.yaml
 k apply -f .
 
 cd ../../../go-sample-app
-sed -i '' 's/pipeline/pack/g' hello-server.go
-git commit -am "Hello pack"
-git push
+sed -i '' 's/pipeline/cnbp/g' hello-server.go
+git commit -am "Hello cnbp"
+git push origin master
 
-tkn pipelinerun list
-tkn pipelinerun logs -f
+kns tekton-pipelines
+tkn pr list
+tkn pr logs -f

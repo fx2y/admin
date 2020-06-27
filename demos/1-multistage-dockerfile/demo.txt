@@ -15,7 +15,7 @@ clear
 ls
 go run hello-server.go 2>&1 > /dev/null &
 curl localhost:8080
-pkill hello-server && wait $!
+pkill hello-server
 
 export environment=sandbox; go run hello-server.go
 
@@ -29,7 +29,7 @@ docker push $IMG_NS/go-sample-app:1.0.0
 
 # Initial deploy
 
-cp -r $DEMO/intro/ops .
+cp -r $DEMO/dockerfile/ops .
 tree .
 cd ops
 yq r -C deployment.yaml
@@ -44,13 +44,15 @@ pkill kubectl
 
 # Rebuild
 
+cd ..
 sed -i '' 's/world/sunshine/g' hello-server.go
-docker build . -t $IMG_NS/go-sample-app:1.0.1 # TODO: why two tags?
+docker build . -t $IMG_NS/go-sample-app:1.0.1
 docker push $IMG_NS/go-sample-app:1.0.1
-sed -i '' 's|1.0.0|1.0.1|g' ops/deployment.yaml
+cd ops
+sed -i '' 's|1.0.0|1.0.1|g' deployment.yaml
 k apply -f ops
 k rollout status deploy/go-sample-app
-k port-forward svc/go-sample-app 8080 &
+k port-forward svc/go-sample-app 8080 2>&1 > /dev/null &
 curl localhost:8080
 pkill kubectl
 
@@ -64,6 +66,6 @@ kns prod
 k apply -f deployment-prod.yaml
 k apply -f service-prod.yaml
 k rollout status deploy/go-sample-app
-k port-forward svc/go-sample-app 8080 &
+k port-forward svc/go-sample-app 8080 2>&1 > /dev/null &
 curl localhost:8080
 pkill kubectl

@@ -31,10 +31,10 @@ k apply -f
 # Test it out
 
 cd ../../../go-sample-app
-sed -i '' 's/Hello, pack/Hello, s1t/g' hello-server.go
+sed -i '' 's/cnbp/s1t/g' hello-server.go
 git add hello-server.go
 git commit -m "Hello Spring One Tour"
-git push
+git push origin master
 
 kns tekton-pipelines
 tkn pipelinerun list

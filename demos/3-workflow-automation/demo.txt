@@ -1,14 +1,15 @@
+clear
+cd ~/workspace-demo/go-sample-app
 @_ECHO_ON
 
 k api-resources --api-group='tekton.dev'
 
-cp -r $DEMO/tekton/cicd .
+cp -r $DEMO/workflow-automation/cicd .
 tree .
 cd cicd/tekton
-yqc pv.yaml
 yqc pvc.yaml
 kns tekton-pipelines
-k apply -f pv.yaml -f pvc.yaml
+k apply -f pvc.yaml
 k get pvc
 k get secrets -n default
 yqc sa.yaml
@@ -25,6 +26,12 @@ tkn task list
 k apply -f build-pipeline.yaml
 
 yqc build-pipeline-run.yaml
+
+hub fork --remote-name origin
+git add -A
+git commit -m "Initial commit"
+git push
+
 k apply -f build-pipeline-run.yaml
 
 tkn pipelineruns list
@@ -38,19 +45,19 @@ yqc build-trigger-binding.yaml
 
 rm build-pipeline-run.yaml
 
-k create clusterrolebinding build-bot --clusterrole=cluster-admin --serviceaccount=tekton-pipelines:build-bot
-
 k apply -f .
 
 tkn el list
 tkn tt list
 tkn tb list
 
-. ${HOME}/create_github_webhook.sh
+k get pods
+
+. ${HOME}/create_github_webhook.sh > /dev/null
 
 git add -A
-git commit -m "Initial commit"
-git push
+git commit -m "Testing triggers"
+git push origin master
 
 tkn pipelinerun list
 tkn pipelinerun logs -f

@@ -129,3 +129,5 @@ cp ${ADMIN}/demos/5-automatic-deployment/create_dockerhub_webhook.sh ${HOME}/cre
 chmod +x ~/create_github_webhook.sh
 chmod +x ~/create_dockerhub_webhook.sh
 
+echo -e "${YELLOW}###### Fixing build-bot permissions"
+kubectl create clusterrolebinding build-bot --clusterrole=cluster-admin --serviceaccount=tekton-pipelines:build-bot

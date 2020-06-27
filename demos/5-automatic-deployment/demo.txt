@@ -1,6 +1,7 @@
+clear
 @_ECHO_ON
 
-cd ../../..
+cd ~/workspace-demo
 mkdir go-sample-app-ops
 mv go-sample-app/ops go-sample-app-ops
 mv go-sample-app/cicd go-sample-app-ops/cicd
@@ -31,7 +32,7 @@ yqc ops-dev-pipeline.yaml
 yqc ops-dev-trigger-binding.yaml
 yqc ops-dev-task.yaml
 
-kns tekton
+kns tekton-pipelines
 k apply -f .
 
 . ${HOME}/create_dockerhub_webhook.sh
@@ -39,7 +40,7 @@ k apply -f .
 cd ../../../go-sample-app
 sed -i '' 's/sunshine/pipeline/g' hello-server.go
 git commit -am "Hello pipeline"
-git push
+git push origin master
 
 tkn pipelinerun list
 tkn pipelinerun logs -f

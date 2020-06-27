@@ -1,13 +1,14 @@
 clear
+cd ~/workspace-demo/go-sample-app/ops
 @_ECHO_ON
 
-@_ECHO_# Remove duplication
+# Remove duplication
 
 catd deployment.yaml deployment-prod.yaml
 catd service.yaml service-prod.yaml
 cd ..
 rm -rf ops
-cp -r $DEMO/kustomize/ops .
+cp -r $DEMO/config-customization/ops .
 tree .
 cd ops/base
 yqc deployment.yaml
@@ -26,15 +27,11 @@ yqc env_patch.yaml
 yqc healthcheck_patch.yaml
 yqc memorylimit_patch.yaml
 yqc kustomization.yaml
-kustomize build --load_restrictor none . | kubectl delete -f -
 kustomize build --load_restrictor none . | kubectl apply -f -
 k get all
-k rollout status deploy/prod-go-sample-app
 k delete deploy go-sample-app
 k delete svc go-sample-app
 
 k get all --show-labels
 k describe pod
 k logs
-
-cd ../../..

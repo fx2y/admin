@@ -1,9 +1,10 @@
+clear
+cd ~/workspace-demo/go-sample-app-ops/cicd
+@_ECHO_ON
 
 k get all -n kpack
 k api-resources --api-group build.pivotal.io
 k get bldr,bld,clstbldr,img,sourceresolvers -A
-cd -
-cd ..
 cp -ri $DEMO/kpack/cicd/kpack .
 cd kpack
 ls -l
@@ -15,7 +16,7 @@ kns default
 k apply -f builder.yaml -f image.yaml
 
 k get builds
-k describe build go-sample-app-build-1-<uuid>
+k describe build
 k get pods
 
 logs -image go-sample-app -build 1

@@ -1,3 +1,5 @@
+clear
+cd ~/workspace-demo/go-sample-app
 @_ECHO_ON
 
 kns prod
