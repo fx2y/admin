@@ -68,5 +68,5 @@ kns prod
 k get rs
 k port-forward svc/prod-go-sample-app 8081:8080 2>&1 > /dev/null &
 curl localhost:8081
-pss
+ps
 kill

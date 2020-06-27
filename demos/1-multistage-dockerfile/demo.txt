@@ -15,11 +15,13 @@ clear
 ls
 go run hello-server.go 2>&1 > /dev/null &
 curl localhost:8080
-pkill hello-server
+pkill hello-server && wait $!
 
 export environment=sandbox; go run hello-server.go
 
 # Build with Dockerfile
+
+bat Dockerfile
 
 docker build . -t go-sample-app
 docker images | grep go-sample-app
@@ -42,7 +44,7 @@ k rollout status deploy/go-sample-app
 k get all
 k port-forward svc/go-sample-app 8080 &
 curl localhost:8080
-pkill kubectl
+pkill kubectl && wait $!
 
 # Rebuild
 
@@ -56,7 +58,7 @@ k apply -f ops
 k rollout status deploy/go-sample-app
 k port-forward svc/go-sample-app 8080 2>&1 > /dev/null &
 curl localhost:8080
-pkill kubectl
+pkill kubectl && wait $!
 
 # Promote to prod
 
@@ -70,4 +72,4 @@ k apply -f service-prod.yaml
 k rollout status deploy/go-sample-app
 k port-forward svc/go-sample-app 8080 2>&1 > /dev/null &
 curl localhost:8080
-pkill kubectl
+pkill kubectl && wait $!
