@@ -1,10 +1,4 @@
 #!/bin/bash
-RESET_FONT="\033[0m"
-BOLD="\033[1m"
-YELLOW="\033[38;5;11m"
-BLUE="\033[0;34m"
-RED="\033[0;31m"
-WHITE="\033[38;5;15m"
 
 # This script assumes you are logged into a cluster dedicated exclusively to this demo
 # It will delete and reinstall the namespaces and tools required:
@@ -26,13 +20,10 @@ WHITE="\033[38;5;15m"
 # pack cli
 # logs cli
 
-source ${ADMIN}/demos/aliases.sh
-source ${ADMIN}/demos/session.sh
-
 cd ~/workspace-demo
 rm -rf ~/workspace-demo/*
-git clone git@github.com:mgbrodi/demorunner.git ~/workspace-demo/demorunner
-PATH=~/workspace-demo/demorunner:$PATH
+
+source ${ADMIN}/demos/session.sh
 
 echo -e "${YELLOW}###### Validate that you are connected to a cluster"
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'
@@ -80,10 +71,6 @@ kubectl apply -f https://github.com/pivotal/kpack/releases/download/v0.0.9/relea
 
 echo -e "${YELLOW}###### Set the workspace correctly"
 cd ~/workspace-demo
-
-echo -e "${YELLOW}###### Get the demo-files"
-git clone git@github.com:springone-tour-2020-cicd/demo-files.git
-DEMO=${PWD}/demo-files
 
 echo -e "${YELLOW}###### Install the Docker Hub secret"
 docker login -u $IMG_NS
