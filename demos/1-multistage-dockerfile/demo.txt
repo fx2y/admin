@@ -1,12 +1,10 @@
 @_ECHO_OFF
 
-cd ~/workspace-demo
-
+cd ~/workspace-demo/go-demo-app
 
 # Check which process is on port 8080:
 #lsof -i :8080 | grep LISTEN
 
-cd go-demo-app
 clear
 @_ECHO_ON
 
@@ -19,7 +17,7 @@ pkill hello-server && wait $!
 
 export environment=sandbox; go run hello-server.go
 
-# Build with Dockerfile
+# Dockerfile (build/tag/push)
 
 bat Dockerfile
 
