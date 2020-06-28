@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: go-sample-app-image
+spec:
+  destination:
+    namespace: default
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: cicd/kpack
+    repoURL: https://github.com/andreasevers/go-sample-app-ops.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated: {}

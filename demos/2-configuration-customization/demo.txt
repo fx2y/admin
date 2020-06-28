@@ -1,4 +1,6 @@
 clear
+# cd ~/workspace-demo/go-sample-app
+# cp -r $DEMO/dockerfile/ .
 cd ~/workspace-demo/go-sample-app/ops
 @_ECHO_ON
 

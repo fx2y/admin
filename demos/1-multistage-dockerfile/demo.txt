@@ -1,8 +1,7 @@
 @_ECHO_OFF
 
 cd ~/workspace-demo
-rm -rf go-sample-app
-git clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go-sample-app
+
 
 # Check which process is on port 8080:
 #lsof -i :8080 | grep LISTEN
@@ -31,6 +30,7 @@ docker push $IMG_NS/go-sample-app:1.0.0
 
 # Initial deploy
 
+mkdir ops
 kubectl create deployment go-sample-app --image=$IMG_NS/go-sample-app:1.0.0 -n dev --dry-run=client -o yaml > ops/deployment.yaml
 k create service clusterip go-sample-app --tcp=8080:8080 -n dev --dry-run=client -o yaml > ops/service.yaml
 
@@ -38,37 +38,21 @@ tree .
 cd ops
 yq r -C deployment.yaml
 yqc service.yaml
-kns dev
 k apply -f .
+kns dev
 k rollout status deploy/go-sample-app
 k get all
-k port-forward svc/go-sample-app 8080 &
-curl localhost:8080
-pkill kubectl && wait $!
-
-# Rebuild
-
-cd ..
-sed -i '' 's/world/sunshine/g' hello-server.go
-docker build . -t $IMG_NS/go-sample-app:1.0.1
-docker push $IMG_NS/go-sample-app:1.0.1
-cd ops
-sed -i '' 's|1.0.0|1.0.1|g' deployment.yaml
-k apply -f ops
-k rollout status deploy/go-sample-app
-k port-forward svc/go-sample-app 8080 2>&1 > /dev/null &
+k port-forward svc/go-sample-app 8080 2>&1 > /dev/null&
 curl localhost:8080
 pkill kubectl && wait $!
 
 # Promote to prod
 
-cp deployment.yaml deployment-prod.yaml
-cp service.yaml service-prod.yaml
-yq w -i deployment-prod.yaml "metadata.namespace" "prod"
-yq w -i service-prod.yaml "metadata.namespace" "prod"
-kns prod
+k create deployment go-sample-app --image=$IMG_NS/go-sample-app:1.0.0 -n prod --dry-run=client -o yaml > ops/deployment-prod.yaml
+k create service clusterip go-sample-app --tcp=8080:8080 -n prod --dry-run=client -o yaml > ops/service-prod.yaml
 k apply -f deployment-prod.yaml
 k apply -f service-prod.yaml
+kns prod
 k rollout status deploy/go-sample-app
 k port-forward svc/go-sample-app 8080 2>&1 > /dev/null &
 curl localhost:8080

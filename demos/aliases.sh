@@ -1,10 +1,4 @@
 #!/bin/bash
-promptcol="$(tput sgr0)$(tput setaf 220)"
-cmdcol="$(tput sgr0)$(tput bold)"
-normalcol="$(tput sgr0)"
-trap 'echo -n "$normalcol"' DEBUG
-PS1="\n\[$promptcol\]\w\$ \[$cmdcol\]"
-
 alias cdd="cd ${PWD}"
 
 # Generate args to highlight changed lines for bat
@@ -30,13 +24,13 @@ catdf() { colordiff -yW"`tput cols`" ${1} ${2}; }
 alias catd=catdf
 alias yqc="yq r -C"
 alias tree="tree -C"
-alias cicd1="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/1-multistage-dockerfile/demo.txt"
-alias cicd2="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/2-configuration-customization/demo.txt"
-alias cicd3="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/3-workflow-automation/demo.txt"
-alias cicd4="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/4-gitops/demo.txt"
-alias cicd5="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/5-automatic-deployment/demo.txt"
-alias cicd6="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/6-continuous-operations/demo.txt"
-alias cicd7="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/7-cloud-native-buildpacks/demo.txt"
-alias cicd8="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/8-kpack/demo.txt"
-alias cicd9="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/9-final-workflow/demo.txt"
-alias cicd10="source \${ADMIN}/demos/session.sh && source demorunner.sh \${ADMIN}/demos/10-jenkinsx/demo.txt"
+alias cicd1="source demorunner.sh \${ADMIN}/demos/1-multistage-dockerfile/demo.txt"
+alias cicd2="source demorunner.sh \${ADMIN}/demos/2-configuration-customization/demo.txt"
+alias cicd3="source demorunner.sh \${ADMIN}/demos/3-workflow-automation/demo.txt"
+alias cicd4="source demorunner.sh \${ADMIN}/demos/4-gitops/demo.txt"
+alias cicd5="source demorunner.sh \${ADMIN}/demos/5-automatic-deployment/demo.txt"
+alias cicd6="source demorunner.sh \${ADMIN}/demos/6-continuous-operations/demo.txt"
+alias cicd7="source demorunner.sh \${ADMIN}/demos/7-cloud-native-buildpacks/demo.txt"
+alias cicd8="source demorunner.sh \${ADMIN}/demos/8-kpack/demo.txt"
+alias cicd9="source demorunner.sh \${ADMIN}/demos/9-final-workflow/demo.txt"
+alias cicd10="source demorunner.sh \${ADMIN}/demos/10-jenkinsx/demo.txt"

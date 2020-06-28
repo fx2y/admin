@@ -1,4 +1,7 @@
 #!/bin/bash
+RESET_FONT="\033[0m"
+BOLD="\033[1m"
+GREEN="\033[0;92m"
 
 # This script assumes you are logged into a cluster dedicated exclusively to this demo
 # It will delete and reinstall the namespaces and tools required:
@@ -7,7 +10,6 @@
 #   tekton
 #   argocd
 #   kpack
-
 
 # You also need the following tools installed locally:
 # tkn cli
@@ -20,42 +22,51 @@
 # pack cli
 # logs cli
 
-cd ~/workspace-demo
-rm -rf ~/workspace-demo/*
+echo -e "${GREEN}###### Sourcing credentials${RESET_FONT}"
+source ~/demo-credentials.sh
+if [[ -z "$GITHUB_NS" ]] \
+|| [[ -z "$GITHUB_USER" ]] \
+|| [[ -z "$IMG_NS" ]] \
+|| [[ -z "$GITHUB_TOKEN" ]] \
+|| [[ -z "$DOCKERHUB_USER" ]] \
+|| [[ -z "$DOCKERHUB_PWD" ]] \
+|| [[ -z "$ADMIN" ]]; then
+    echo -e "${RED}${BOLD}Credentials not set! Create a correct demo-credentials.sh inside the home directory!${RESET_FONT}"
+    return
+fi
 
-source ${ADMIN}/demos/session.sh
-
-echo -e "${YELLOW}###### Validate that you are connected to a cluster"
+echo -e "${GREEN}###### Validate that you are connected to a cluster${RESET_FONT}"
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'
 if [[ $(kubectl get nodes -o jsonpath="${JSONPATH}" | grep "Ready=True") == "" ]]; then
-  echo -e "${YELLOW}Please log into a Kubernetes cluster and try again"
+  echo -e "${GREEN}Please log into a Kubernetes cluster and try again"
   kill -INT $$
 else
   echo -e "Using cluster:\n $(kubectl cluster-info)"
 fi
 
-echo -e "${YELLOW}###### Delete/recreate dev and prod namespaces"
+echo -e "${GREEN}###### Delete/recreate dev and prod namespaces${RESET_FONT}"
 kubectl delete ns dev
 kubectl delete ns prod
 kubectl create ns dev
 kubectl create ns prod
 
-echo -e "${YELLOW}###### Delete/reinstall Tekton"
+echo -e "${GREEN}###### Delete/reinstall Tekton${RESET_FONT}"
 kubectl delete ns tekton-pipelines
-echo -e "${YELLOW}###### Tekton Hack"
+echo -e "${GREEN}###### Tekton Hack"
 curl -s https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.13.2/release.yaml | sed '$ d' | yq d -d '*' - 'metadata.labels.[app.kubernetes.io/part-of]' | kubectl apply -f -
-echo -e "${YELLOW}###### Sleepy time"
+echo -e "${GREEN}###### Sleepy time"
 sleep 5
-echo -e "${YELLOW}###### Tekton Fo Real Nao"
+echo -e "${GREEN}###### Tekton Fo Real Nao${RESET_FONT}"
 kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.13.2/release.yaml
 kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
+kns tekton-pipelines
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/git/git-clone.yaml
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/golang/lint.yaml
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/golang/tests.yaml
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/kaniko/kaniko.yaml
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/v1beta1/buildpacks/buildpacks-v3.yaml
 
-echo -e "${YELLOW}###### Delete/reinstall ArgoCD"
+echo -e "${GREEN}###### Delete/reinstall ArgoCD${RESET_FONT}"
 kubectl delete ns argocd
 kubectl create ns argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
@@ -65,14 +76,12 @@ data:
 EOF
 ) | kubectl apply -f -
 
-echo -e "${YELLOW}###### Delete/reinstall kpack"
+echo -e "${GREEN}###### Delete/reinstall kpack${RESET_FONT}"
 kubectl delete ns kpack
 kubectl apply -f https://github.com/pivotal/kpack/releases/download/v0.0.9/release-0.0.9.yaml
 
-echo -e "${YELLOW}###### Set the workspace correctly"
-cd ~/workspace-demo
 
-echo -e "${YELLOW}###### Install the Docker Hub secret"
+echo -e "${GREEN}###### Install the Docker Hub secret${RESET_FONT}"
 docker login -u $IMG_NS
 
 touch config.json
@@ -97,17 +106,8 @@ kubectl create secret generic regcred --from-file=.dockerconfigjson=config.json 
 kubectl create secret generic regcred --from-file=.dockerconfigjson=config.json --type=kubernetes.io/dockerconfigjson -n default
 rm -f config.json
 
-echo -e "${YELLOW}###### Get token to be able to talk to Docker Hub"
-DOCKERHUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${DOCKERHUB_USER}'", "password": "'${DOCKERHUB_PWD}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-
-echo -e "${YELLOW}###### Install the GitHub token secret"
+echo -e "${GREEN}###### Install the GitHub token secret${RESET_FONT}"
 kubectl create secret generic github-token --from-literal=GITHUB_TOKEN=${GITHUB_TOKEN} -n tekton-pipelines
 
-echo -e "${YELLOW}###### Make the webhook scripts executable"
-cp ${ADMIN}/demos/3-workflow-automation/create_github_webhook.sh ${HOME}/create_github_webhook.sh
-cp ${ADMIN}/demos/5-automatic-deployment/create_dockerhub_webhook.sh ${HOME}/create_dockerhub_webhook.sh
-chmod +x ~/create_github_webhook.sh
-chmod +x ~/create_dockerhub_webhook.sh
-
-echo -e "${YELLOW}###### Fixing build-bot permissions"
+echo -e "${GREEN}###### Fixing build-bot permissions${RESET_FONT}"
 kubectl create clusterrolebinding build-bot --clusterrole=cluster-admin --serviceaccount=tekton-pipelines:build-bot

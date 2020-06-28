@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-sample-app
+spec:
+  template:
+    spec:
+      containers:
+        - name: go-sample-app
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              memory: 256Mi
