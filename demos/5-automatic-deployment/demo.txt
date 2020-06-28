@@ -2,23 +2,23 @@ clear
 @_ECHO_ON
 
 cd ~/workspace-demo
-mkdir go-sample-app-ops
-mv go-sample-app/ops go-sample-app-ops
-mv go-sample-app/cicd go-sample-app-ops/cicd
+mkdir go-demo-app-ops
+mv go-demo-app/ops go-demo-app-ops
+mv go-demo-app/cicd go-demo-app-ops/cicd
 tree .
-sed -i '' 's/go-sample-app.git/go-sample-app-ops.git/g' go-sample-app-ops/cicd/argo/argo-deploy-dev.yaml
-sed -i '' 's/go-sample-app.git/go-sample-app-ops.git/g' go-sample-app-ops/cicd/argo/argo-deploy-prod.yaml
+sed -i '' 's/go-demo-app.git/go-demo-app-ops.git/g' go-demo-app-ops/cicd/argo/argo-deploy-dev.yaml
+sed -i '' 's/go-demo-app.git/go-demo-app-ops.git/g' go-demo-app-ops/cicd/argo/argo-deploy-prod.yaml
 kns argocd
-k apply -f go-sample-app-ops/cicd/argo
-cd go-sample-app
+k apply -f go-demo-app-ops/cicd/argo
+cd go-demo-app
 git add -A
 git commit -m "Moved ops and cicd directories to their own repo"
 git push origin master
-cd ../go-sample-app-ops
+cd ../go-demo-app-ops
 git init
 hub create
 git add -A
-git commit -m "Files moved from go-sample-app repo"
+git commit -m "Files moved from go-demo-app repo"
 git push origin master
 
 
@@ -37,7 +37,7 @@ k apply -f .
 
 . ${HOME}/create_dockerhub_webhook.sh
 
-cd ../../../go-sample-app
+cd ../../../go-demo-app
 sed -i '' 's/sunshine/pipeline/g' hello-server.go
 git commit -am "Hello pipeline"
 git push origin master
@@ -49,6 +49,6 @@ tkn pipelinerun logs -f
 
 kns dev
 k get rs
-k port-forward svc/dev-go-sample-app 8081:8080 &
+k port-forward svc/dev-go-demo-app 8081:8080 &
 curl localhost:8081
 kill

@@ -1,19 +1,19 @@
 clear
-cd ~/workspace-demo/go-sample-app
+cd ~/workspace-demo/go-demo-app
 @_ECHO_ON
 
 cat Dockerfile
 
 pack set-default-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
-pack build $IMG_NS/go-sample-app:pack-0.0.1 --publish
+pack build $IMG_NS/go-demo-app:pack-0.0.1 --publish
 docker images | grep paketo
 docker pull gcr.io/paketo-buildpacks/run:0.0.19-base-cnb
 docker images | grep paketo
 docker tag gcr.io/paketo-buildpacks/run:0.0.19-base-cnb gcr.io/paketo-buildpacks/run:base-cnb
 docker images | grep paketo
-pack rebase $IMG_NS/go-sample-app:pack-0.0.1 --publish --no-pull
+pack rebase $IMG_NS/go-demo-app:pack-0.0.1 --publish --no-pull
 
-cd ../go-sample-app-ops/cicd/tekton
+cd ../go-demo-app-ops/cicd/tekton
 cp -ri $DEMO/cloud-native-buildpacks/cicd/tekton/ .
 ls -l
 
@@ -25,7 +25,7 @@ yqc buildpacks-app-image.yaml
 
 k apply -f .
 
-cd ../../../go-sample-app
+cd ../../../go-demo-app
 sed -i '' 's/pipeline/cnbp/g' hello-server.go
 git commit -am "Hello cnbp"
 git push origin master

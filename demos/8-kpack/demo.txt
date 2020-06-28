@@ -1,5 +1,5 @@
 clear
-cd ~/workspace-demo/go-sample-app-ops/cicd
+cd ~/workspace-demo/go-demo-app-ops/cicd
 @_ECHO_ON
 
 k get all -n kpack
@@ -19,7 +19,7 @@ k get builds
 k describe build
 k get pods
 
-logs -image go-sample-app -build 1
+logs -image go-demo-app -build 1
 
 pack suggest-stacks
 pack inspect-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
@@ -38,11 +38,11 @@ catd image-1.yaml image-2.yaml
 k apply -f image-1.yaml -f image-2.yaml -f image-3.yaml
 k get builds
 k describe build
-logs -image go-sample-app-1 -build 1
+logs -image go-demo-app-1 -build 1
 
 ## Rebase images
 
 sed -i '' 's/run:0.0.19-base-cnb/run:0.0.20-base-cnb/g' custom-builder.yaml
 k apply -f custom-builder.yaml
-logs -image go-sample-app-1 -build 2
+logs -image go-demo-app-1 -build 2
 k describe build

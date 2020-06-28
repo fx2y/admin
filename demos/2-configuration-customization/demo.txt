@@ -1,7 +1,7 @@
 clear
-# cd ~/workspace-demo/go-sample-app
+# cd ~/workspace-demo/go-demo-app
 # cp -r $DEMO/dockerfile/ .
-cd ~/workspace-demo/go-sample-app/ops
+cd ~/workspace-demo/go-demo-app/ops
 @_ECHO_ON
 
 # Remove duplication
@@ -31,8 +31,8 @@ yqc memorylimit_patch.yaml
 yqc kustomization.yaml
 kustomize build --load_restrictor none . | kubectl apply -f -
 k get all
-k delete deploy go-sample-app
-k delete svc go-sample-app
+k delete deploy go-demo-app
+k delete svc go-demo-app
 
 k get all --show-labels
 k describe pod

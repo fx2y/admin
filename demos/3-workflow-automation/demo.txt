@@ -1,5 +1,5 @@
 clear
-cd ~/workspace-demo/go-sample-app
+cd ~/workspace-demo/go-demo-app
 @_ECHO_ON
 
 k api-resources --api-group='tekton.dev'

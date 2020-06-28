@@ -1,5 +1,5 @@
 clear
-cd ~/workspace-demo/go-sample-app
+cd ~/workspace-demo/go-demo-app
 @_ECHO_ON
 
 kns argocd
@@ -11,10 +11,10 @@ k get pods
 argocd login localhost:8080 --insecure --username admin
 
 # GENERAL
-# Application Name: dev-go-sample-app
+# Application Name: dev-go-demo-app
 # Project: default
 # SOURCE
-# Repository URL: https://github.com/<GITHUB_NS>/go-sample-app.git
+# Repository URL: https://github.com/<GITHUB_NS>/go-demo-app.git
 # Revision: HEAD
 # Path: ops/overlays/dev
 # DESTINATION
@@ -28,19 +28,19 @@ argocd login localhost:8080 --insecure --username admin
 kns dev
 k get all
 k get endpoints
-k port-forward svc/go-sample-app 8081:8080 2>&1 > /dev/null &
+k port-forward svc/go-demo-app 8081:8080 2>&1 > /dev/null &
 curl localhost:8081
 ps
 kill
 
-argocd app set dev-go-sample-app --sync-policy automated
+argocd app set dev-go-demo-app --sync-policy automated
 cd ops/overlays/dev
 sed -i '' 's|1.0.1|1.0.0|g' kustomization.yaml
 
 git commit -am "Switched back to 1.0.0"
 git push origin master
 k get pods
-k port-forward svc/go-sample-app 8081:8080 &
+k port-forward svc/go-demo-app 8081:8080 &
 curl localhost:8081
 ps
 kill
@@ -50,9 +50,9 @@ yq w -i kustomization.yaml namePrefix dev-
 git commit -am 'Add prefix dev-'
 git push origin master
 argocd app list
-argocd app get dev-go-sample-app
+argocd app get dev-go-demo-app
 # Hit Prune Sync in UI
-argocd app get dev-go-sample-app
+argocd app get dev-go-demo-app
 
 cd ../../../cicd
 cp -r $DEMO/gitops/cicd/argo argo
@@ -66,7 +66,7 @@ kns argocd
 k apply -f argo-deploy-prod.yaml
 kns prod
 k get rs
-k port-forward svc/prod-go-sample-app 8081:8080 2>&1 > /dev/null &
+k port-forward svc/prod-go-demo-app 8081:8080 2>&1 > /dev/null &
 curl localhost:8081
 ps
 kill
