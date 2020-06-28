@@ -2,7 +2,7 @@
 
 while [ $(kubectl get svc el-build-event-listener -n tekton-pipelines -o jsonpath='{.status.loadBalancer.ingress[0].ip}' | wc -w) != 1 ] ; do echo "Waiting for event listener to expose external IP..." && sleep 5 ; done
 
-hub api -X POST -H "Authorization: token ${GITHUB_TOKEN}" /repos/andreasevers/go-demo-app/hooks --input - <<EOF
+hub api -X POST -H "Authorization: token ${GITHUB_TOKEN}" /repos/springone-tour-2020-cicd/go-demo-app/hooks --input - <<EOF
 {
   "name": "web",
   "active": true,
