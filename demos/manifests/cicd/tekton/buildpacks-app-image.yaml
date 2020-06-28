@@ -1,9 +1,0 @@
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: buildpacks-app-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: andreasevers/go-sample-app:1.0.3
