@@ -17,9 +17,6 @@ k get pods
 
 logs -image go-demo-app -build 1
 
-pack suggest-stacks
-pack inspect-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
-
 yqc -d 0 custom-builder.yaml
 yqc -d 1 custom-builder.yaml
 yqc -d 2 custom-builder.yaml
@@ -42,3 +39,5 @@ sed -i '' 's/run:0.0.19-base-cnb/run:0.0.20-base-cnb/g' custom-builder.yaml
 k apply -f custom-builder.yaml
 logs -image go-demo-app-1 -build 2
 k describe build
+
+# Result: kpack checks image.yaml and pushes to Docker Hub

@@ -26,3 +26,5 @@ cd -
 k apply -f argo-deploy-prod.yaml
 kns prod
 k get rs
+
+# Result: dev-go-demo-app installed and kept up-to-date
