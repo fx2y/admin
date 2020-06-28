@@ -11,6 +11,25 @@ ls ops-dev* | xargs -L 1 kubectl apply -f
 
 . ~/create_dockerhub_webhook.sh
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 cd ../../../go-demo-app
 sed -i '' 's/pipeline/spring-one-tour/g' hello-server.go
 git commit -am "Hello spring-one-tour"

@@ -14,31 +14,56 @@ tkn task list
 
 # Observe parameters and placeholders in the Tasks on GitHub
 
-k apply -f build-pipeline.yaml
-
-yqc build-pipeline-run.yaml
-k apply -f build-pipeline-run.yaml
-
-tkn pipelineruns list
-tkn pr describe build-pipeline-run
-
 # Automate triggering
 
 yqc build-event-listener.yaml
 yqc build-trigger-template.yaml
 yqc build-trigger-binding.yaml
+yqc update-image-revision-task.yaml
 
-rm build-pipeline-run.yaml
+yqc ops-dev-trigger-binding.yaml
+yqc ops-dev-pipeline.yaml
+yqc ops-dev-task.yaml
 
-k apply -f .
+kns tekton-pipelines
+
+kubectl apply -f .
 
 . ~/create_github_webhook.sh > /dev/null
+. ~/create_dockerhub_webhook.sh
 
-cd ~/worspace-demo/go-demo-app
+cd ../argo
+yqc argo-deploy-image.yaml
+yqc argo-deploy-tekton.yaml
 
-sed -i '' 's/world/pipeline/g' hello-server.go
-git commit -am "Hello pipeline"
-git push
+kns argocd
+k apply -f .
+
+# Test it out
+
+cd ../../../go-demo-app
+sed -i '' 's/cnbp/s1t/g' hello-server.go
+git add hello-server.go
+git commit -m "Hello Spring One Tour"
+git push origin master
+
+kns tekton-pipelines
+tkn pipelinerun list
+tkn pipelinerun logs -f
+
+kns default
+k get builds
+k describe build
+
+logs -image go-demo-app -build
 
 tkn pipelinerun list
-tkn pr logs -f
+tkn pipelinerun logs -f
+
+kns dev
+k get deploy
+
+k port-forward svc/dev-go-demo-app 8083:8080 &
+curl localhost:8083
+
+# Argo UI
