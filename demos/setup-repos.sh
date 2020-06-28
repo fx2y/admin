@@ -23,21 +23,15 @@ echo -e "${PURPLE}###### Cloning demorunner${RESET_FONT}"
 git clone git@github.com:mgbrodi/demorunner.git ~/workspace-demo/demorunner
 
 echo -e "${PURPLE}###### Setting up APP repo${RESET_FONT}"
-git clone https://github.com/springone-tour-2020-cicd/go-sample-app.git && cd go-sample-app
-hub fork --remote-name origin
-git remotes remove upstream
-git push
+git clone https://github.com/springone-tour-2020-cicd/go-demo-app.git && cd go-demo-app
 cd ~/workspace-demo
 
 echo -e "${PURPLE}###### Setting up OPS repo${RESET_FONT}"
-git clone https://github.com/springone-tour-2020-cicd/go-sample-app-ops.git && cd go-sample-app-ops
-hub fork --remote-name origin
-git remotes remove upstream
-git push
+git clone https://github.com/springone-tour-2020-cicd/go-demo-app-ops.git && cd go-demo-app-ops
 cd ~/workspace-demo
 
 echo -e "${PURPLE}###### Adding final ops files inside OPS repo${RESET_FONT}"
-cp -r $ADMIN/demos/manifests/ ~/workspace-demo/go-sample-app-ops/
+cp -r $ADMIN/demos/manifests/ ~/workspace-demo/go-demo-app-ops/
 
 echo -e "${PURPLE}###### Setting up webhook scripts${RESET_FONT}"
 cp ${ADMIN}/demos/3-workflow-automation/create_github_webhook.sh ~/create_github_webhook.sh
