@@ -29,7 +29,7 @@ if [[ -z "$GITHUB_NS" ]] \
 fi
 
 echo -e "${YELLOW}###### Setting up aliases${RESET_FONT}"
-source ${ADMIN}/
+source ${ADMIN}/demos/aliases.sh
 
 echo -e "${YELLOW}###### Get token to be able to talk to Docker Hub${RESET_FONT}"
 DOCKERHUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${DOCKERHUB_USER}'", "password": "'${DOCKERHUB_PWD}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
