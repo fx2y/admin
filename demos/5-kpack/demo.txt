@@ -4,7 +4,6 @@ kns default
 @_ECHO_ON
 
 k api-resources --api-group build.pivotal.io
-k get bldr,bld,clstbldr,img,sourceresolvers -A
 
 yqc builder.yaml
 yqc image.yaml
