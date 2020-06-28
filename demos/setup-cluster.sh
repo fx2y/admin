@@ -52,9 +52,9 @@ kubectl create ns prod
 
 echo -e "${GREEN}###### Delete/reinstall Tekton${RESET_FONT}"
 kubectl delete ns tekton-pipelines
-echo -e "${GREEN}###### Tekton Hack"
+echo -e "${GREEN}###### Tekton Hack${RESET_FONT}"
 curl -s https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.13.2/release.yaml | sed '$ d' | yq d -d '*' - 'metadata.labels.[app.kubernetes.io/part-of]' | kubectl apply -f -
-echo -e "${GREEN}###### Sleepy time"
+echo -e "${GREEN}###### Sleepy time${RESET_FONT}"
 sleep 5
 echo -e "${GREEN}###### Tekton Fo Real Nao${RESET_FONT}"
 kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.13.2/release.yaml
@@ -82,7 +82,7 @@ kubectl apply -f https://github.com/pivotal/kpack/releases/download/v0.0.9/relea
 
 
 echo -e "${GREEN}###### Install the Docker Hub secret${RESET_FONT}"
-docker login -u $IMG_NS
+docker login -u $IMG_NS -p $DOCKERHUB_PWD
 
 touch config.json
 storetype=$(jq -r .credsStore < ~/.docker/config.json)
