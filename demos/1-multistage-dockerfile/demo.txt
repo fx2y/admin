@@ -1,5 +1,9 @@
 @_ECHO_OFF
 
+cd ~/workspace
+rm -rf buildpack-samples
+git clone https://github.com/buildpacks/samples.git buildpack-samples
+
 cd ~/workspace-demo/go-demo-app
 
 # Check which process is on port 8080:
@@ -9,49 +13,36 @@ clear
 @_ECHO_ON
 
 # Sample app
-
 ls
 go run hello-server.go 2>&1 > /dev/null &
 curl localhost:8080
 pkill hello-server && wait $!
-
 export environment=sandbox; go run hello-server.go
 
 # Dockerfile (build/tag/push)
-
 bat Dockerfile
 
-# docker build, docker tag, docker push
-
-
-#docker build . -t go-demo-app
-#docker images | grep go-demo-app
-
-#docker tag go-demo-app $IMG_NS/go-demo-app:pack-1.0.0
-#docker push $IMG_NS/go-demo-app:pack-1.0.0
-
-# Build with pack
-
+# Buildpacks (pack + builder)
 pack set-default-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
-pack build $IMG_NS/go-demo-app:pack-1.0.0 --publish
-docker images | grep paketo
+pack build go-demo-app
+docker images
 
-# Inspections
+# Custom buildpacks
+pack build go-demo-app --buildpack from=builder --buildpack ../buildpacks/hello-world
 
-# Other CNB features?
+# Transparency
+pack inspect-image go-demo-app
+pack inspect-image go-demo-app --bom
+pack inspect-builder
 
-# Custom buildpacks?
-
-# Rebase
-
+# OS patching
 docker pull gcr.io/paketo-buildpacks/run:0.0.19-base-cnb
-docker images | grep paketo
 docker tag gcr.io/paketo-buildpacks/run:0.0.19-base-cnb gcr.io/paketo-buildpacks/run:base-cnb
 docker images | grep paketo
-pack rebase $IMG_NS/go-demo-app:pack-1.0.0 --publish --no-pull
+pack rebase go-demo-app --no-pull
 
 # Publish
-
+pack build $IMG_NS/go-demo-app:pack-1.0.0 --publish
 
 # Initial deploy
 
