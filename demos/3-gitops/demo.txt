@@ -17,14 +17,13 @@ cd ../../ops/overlays/dev
 yq w -i kustomization.yaml namePrefix dev-
 git commit -am 'Add prefix dev-'
 git push origin master
-argocd app list
-argocd app get dev-go-demo-app
 # Prune
-argocd app get dev-go-demo-app
 
-cd -
+cd ../prod
 k apply -f argo-deploy-prod.yaml
-kns prod
-k get rs
+argocd app set prod-go-demo-app --self-heal
 
-# Result: dev-go-demo-app installed and kept up-to-date
+kns prod
+k delete deploy prod-go-demo-app; kubectl get rs
+
+# Result: dev/prod-go-demo-app installed and kept up-to-date

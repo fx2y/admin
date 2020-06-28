@@ -1,8 +1,0 @@
-clear
-cd ~/workspace-demo/go-demo-app
-@_ECHO_ON
-
-kns prod
-argocd app set prod-go-demo-app --self-heal
-k delete deploy prod-go-demo-app
-k get deploy
