@@ -4,7 +4,6 @@ k apply -f pvc.yaml -f sa.yaml
 @_ECHO_ON
 
 k api-resources --api-group='tekton.dev'
-
 kns tekton-pipelines
 
 yqc build-pipeline.yaml
@@ -18,7 +17,6 @@ tkn task list
 k apply -f build-pipeline.yaml
 
 yqc build-pipeline-run.yaml
-
 k apply -f build-pipeline-run.yaml
 
 tkn pipelineruns list
@@ -34,7 +32,7 @@ rm build-pipeline-run.yaml
 
 k apply -f .
 
-. ${HOME}/create_github_webhook.sh > /dev/null
+. ~/create_github_webhook.sh > /dev/null
 
 cd ~/worspace-demo/go-demo-app
 

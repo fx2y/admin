@@ -1,54 +1,30 @@
 clear
+cd ~/workspace-demo/go-demo-app-ops/cicd/tekton
 @_ECHO_ON
 
-cd ~/workspace-demo
-mkdir go-demo-app-ops
-mv go-demo-app/ops go-demo-app-ops
-mv go-demo-app/cicd go-demo-app-ops/cicd
-tree .
-sed -i '' 's/go-demo-app.git/go-demo-app-ops.git/g' go-demo-app-ops/cicd/argo/argo-deploy-dev.yaml
-sed -i '' 's/go-demo-app.git/go-demo-app-ops.git/g' go-demo-app-ops/cicd/argo/argo-deploy-prod.yaml
-kns argocd
-k apply -f go-demo-app-ops/cicd/argo
-cd go-demo-app
-git add -A
-git commit -m "Moved ops and cicd directories to their own repo"
-git push origin master
-cd ../go-demo-app-ops
-git init
-hub create
-git add -A
-git commit -m "Files moved from go-demo-app repo"
-git push origin master
-
-
-cd cicd/tekton
-cp -r $DEMO/automatic-deployment/cicd/tekton/ .
-ls -l
-
-yqc ops-dev-event-listener.yaml
 yqc ops-dev-trigger-binding.yaml
 yqc ops-dev-pipeline.yaml
-yqc ops-dev-trigger-binding.yaml
 yqc ops-dev-task.yaml
 
 kns tekton-pipelines
-k apply -f .
+ls ops-dev* | xargs -L 1 kubectl apply -f
 
-. ${HOME}/create_dockerhub_webhook.sh
+. ~/create_dockerhub_webhook.sh
 
 cd ../../../go-demo-app
-sed -i '' 's/sunshine/pipeline/g' hello-server.go
-git commit -am "Hello pipeline"
+sed -i '' 's/pipeline/spring-one-tour/g' hello-server.go
+git commit -am "Hello spring-one-tour"
 git push origin master
 
-tkn pipelinerun list
-tkn pipelinerun logs -f
-tkn pipelinerun list
-tkn pipelinerun logs -f
+tkn pr list
+tkn pr logs -f
+# Docker Hub should trigger ops-dev pipeline
+tkn pr list
+tkn pr logs -f
 
 kns dev
 k get rs
-k port-forward svc/dev-go-demo-app 8081:8080 &
+k port-forward svc/dev-go-demo-app 8081:8080 2>&1 > /dev/null &
+PID=$!
 curl localhost:8081
-kill
+kill $PID && wait $!

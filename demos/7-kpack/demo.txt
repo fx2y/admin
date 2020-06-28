@@ -1,18 +1,14 @@
 clear
-cd ~/workspace-demo/go-demo-app-ops/cicd
+cd ~/workspace-demo/go-demo-app-ops/cicd/kpack
+kns default
 @_ECHO_ON
 
-k get all -n kpack
 k api-resources --api-group build.pivotal.io
 k get bldr,bld,clstbldr,img,sourceresolvers -A
-cp -ri $DEMO/kpack/cicd/kpack .
-cd kpack
-ls -l
 
 yqc builder.yaml
 yqc image.yaml
 
-kns default
 k apply -f builder.yaml -f image.yaml
 
 k get builds
