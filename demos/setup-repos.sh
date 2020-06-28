@@ -30,11 +30,8 @@ echo -e "${PURPLE}###### Setting up OPS repo${RESET_FONT}"
 git clone https://github.com/springone-tour-2020-cicd/go-demo-app-ops.git && cd go-demo-app-ops
 cd ~/workspace-demo
 
-echo -e "${PURPLE}###### Adding final ops files inside OPS repo${RESET_FONT}"
-cp -r $ADMIN/demos/manifests/ ~/workspace-demo/go-demo-app-ops/
-
 echo -e "${PURPLE}###### Setting up webhook scripts${RESET_FONT}"
-cp ${ADMIN}/demos/3-workflow-automation/create_github_webhook.sh ~/create_github_webhook.sh
-cp ${ADMIN}/demos/5-automatic-deployment/create_dockerhub_webhook.sh ~/create_dockerhub_webhook.sh
+cp ${ADMIN}/demos/6-workflow-automation/create_github_webhook.sh ~/create_github_webhook.sh
+cp ${ADMIN}/demos/6-workflow-automation/create_dockerhub_webhook.sh ~/create_dockerhub_webhook.sh
 chmod +x ~/create_github_webhook.sh
 chmod +x ~/create_dockerhub_webhook.sh
