@@ -6,6 +6,7 @@ cd ~/workspace-demo
 # Check which process is on port 8080:
 #lsof -i :8080 | grep LISTEN
 
+cd go-demo-app
 clear
 @_ECHO_ON
 
@@ -22,16 +23,42 @@ export environment=sandbox; go run hello-server.go
 
 bat Dockerfile
 
-docker build . -t go-demo-app
-docker images | grep go-demo-app
+# docker build, docker tag, docker push
 
-docker tag go-demo-app $IMG_NS/go-demo-app:1.0.0
-docker push $IMG_NS/go-demo-app:1.0.0
+
+#docker build . -t go-demo-app
+#docker images | grep go-demo-app
+
+#docker tag go-demo-app $IMG_NS/go-demo-app:pack-1.0.0
+#docker push $IMG_NS/go-demo-app:pack-1.0.0
+
+# Build with pack
+
+pack set-default-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
+pack build $IMG_NS/go-demo-app:pack-1.0.0 --publish
+docker images | grep paketo
+
+# Inspections
+
+# Other CNB features?
+
+# Custom buildpacks?
+
+# Rebase
+
+docker pull gcr.io/paketo-buildpacks/run:0.0.19-base-cnb
+docker images | grep paketo
+docker tag gcr.io/paketo-buildpacks/run:0.0.19-base-cnb gcr.io/paketo-buildpacks/run:base-cnb
+docker images | grep paketo
+pack rebase $IMG_NS/go-demo-app:pack-1.0.0 --publish --no-pull
+
+# Publish
+
 
 # Initial deploy
 
 mkdir ops
-kubectl create deployment go-demo-app --image=$IMG_NS/go-demo-app:1.0.0 -n dev --dry-run=client -o yaml > ops/deployment.yaml
+kubectl create deployment go-demo-app --image=$IMG_NS/go-demo-app:pack-1.0.0 -n dev --dry-run=client -o yaml > ops/deployment.yaml
 k create service clusterip go-demo-app --tcp=8080:8080 -n dev --dry-run=client -o yaml > ops/service.yaml
 
 tree .
@@ -40,20 +67,20 @@ yq r -C deployment.yaml
 yqc service.yaml
 k apply -f .
 kns dev
-k rollout status deploy/go-demo-app
 k get all
-k port-forward svc/go-demo-app 8080 2>&1 > /dev/null&
-curl localhost:8080
-pkill kubectl && wait $!
+#k port-forward svc/go-demo-app 8080 2>&1 > /dev/null&
+#curl localhost:8080
+#pkill kubectl && wait $!
 
 # Promote to prod
 
-k create deployment go-demo-app --image=$IMG_NS/go-demo-app:1.0.0 -n prod --dry-run=client -o yaml > ops/deployment-prod.yaml
+k create deployment go-demo-app --image=$IMG_NS/go-demo-app:pack-1.0.0 -n prod --dry-run=client -o yaml > ops/deployment-prod.yaml
 k create service clusterip go-demo-app --tcp=8080:8080 -n prod --dry-run=client -o yaml > ops/service-prod.yaml
-k apply -f deployment-prod.yaml
-k apply -f service-prod.yaml
+k apply -f deployment-prod.yaml -f service-prod.yaml
 kns prod
-k rollout status deploy/go-demo-app
+k get all
 k port-forward svc/go-demo-app 8080 2>&1 > /dev/null &
 curl localhost:8080
 pkill kubectl && wait $!
+
+# Result: Docker Hub contains go-demo-app:pack-1.0.0
