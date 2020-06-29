@@ -1,6 +1,7 @@
 clear
 cd ~/workspace-demo/go-demo-app-ops/cicd/kpack
 kns default
+
 @_ECHO_ON
 
 k api-resources --api-group build.pivotal.io
@@ -14,18 +15,21 @@ k get builds
 k describe build
 k get pods
 
-logs -image go-demo-app -build 1
+# logs -image go-demo-app -build 1
 
 yqc -d 0 custom-builder.yaml
 yqc -d 1 custom-builder.yaml
 yqc -d 2 custom-builder.yaml
+
 k apply -f custom-builder.yaml
+
 k get custombuilder
 
 ## Build images
 
 catd image.yaml image-1.yaml
-catd image-1.yaml image-2.yaml
+catd image.yaml image-2.yaml
+catd image.yaml image-3.yaml
 
 k apply -f image-1.yaml -f image-2.yaml -f image-3.yaml
 k get builds

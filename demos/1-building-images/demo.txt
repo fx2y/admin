@@ -1,14 +1,19 @@
 @_ECHO_OFF
 
-cd ~/workspace
+cd ~/workspace-demo
+
+dclean
+docker pull gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
+docker pull paketobuildpacks/run:base-cnb
+docker pull buildpacksio/lifecycle:0.8.0
+
 rm -rf buildpack-samples
 git clone https://github.com/buildpacks/samples.git buildpack-samples
-
-cd ~/workspace-demo/go-demo-app
 
 # Check which process is on port 8080:
 #lsof -i :8080 | grep LISTEN
 
+cd go-demo-app
 clear
 @_ECHO_ON
 
@@ -17,31 +22,31 @@ ls
 go run hello-server.go 2>&1 > /dev/null &
 curl localhost:8080
 pkill hello-server && wait $!
-export environment=sandbox; go run hello-server.go
 
-# Dockerfile (build/tag/push)
+clear
+# Dockerfile (docker build -f Dockerfile ...)
 bat Dockerfile
 
-# Buildpacks (pack + builder)
+# Buildpacks (tool + lifecycle + buildpacks)
 pack set-default-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
 pack build go-demo-app
 docker images
 
-# Custom buildpacks
-pack build go-demo-app --buildpack from=builder --buildpack ../buildpacks/hello-world
+@_SKIP# Custom buildpacks
+@_SKIPpack build go-demo-app --buildpack from=builder --buildpack ../buildpack-samples/buildpacks/hello-world
 
 # Transparency
-pack inspect-image go-demo-app
-pack inspect-image go-demo-app --bom
+@_SKIPpack inspect-image go-demo-app
+@_SKIPpack inspect-image go-demo-app --bom | jq
 pack inspect-builder
 
 # OS patching
 docker pull gcr.io/paketo-buildpacks/run:0.0.19-base-cnb
 docker tag gcr.io/paketo-buildpacks/run:0.0.19-base-cnb gcr.io/paketo-buildpacks/run:base-cnb
-docker images | grep paketo
+docker images
 pack rebase go-demo-app --no-pull
 
 # Publish
 pack build $IMG_NS/go-demo-app:pack-1.0.0 --publish
 
-# Result: Docker Hub contains go-demo-app:pack-1.0.0
+@_SKIP# Result: Docker Hub contains go-demo-app:pack-1.0.0
