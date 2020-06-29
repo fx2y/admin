@@ -3,7 +3,7 @@
 cd ~/workspace-demo/go-demo-app-ops/cicd/argo
 
 @_SKIPk port-forward svc/argocd-server 9090:80 -n argocd
-k port-forward svc/argocd-server 9090:80 -n argocd 2>&1 > /dev/null &
+@_SKIPk port-forward svc/argocd-server 9090:80 -n argocd 2>&1 > /dev/null &
 
 ARGOCD_PASSWORD="$(kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server -o name | cut -d'/' -f 2)"
 argocd login localhost:9090 --insecure --username admin --password "${ARGOCD_PASSWORD}"
