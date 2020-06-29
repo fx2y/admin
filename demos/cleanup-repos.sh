@@ -21,13 +21,13 @@ rm -rf ~/workspace-demo/go-demo-app-ops
 
 echo -e "${PURPLE}###### Resetting APP repo${RESET_FONT}"
 cd ~/workspace-demo
-git clone https://github.com/springone-tour-2020-cicd/go-demo-app.git && cd go-demo-app
+git clone git@github.com:springone-tour-2020-cicd/go-demo-app.git && cd go-demo-app
 git reset --hard b25ac4b
 git push -f
 cd ~/workspace-demo
 
 echo -e "${PURPLE}###### Resetting OPS repo${RESET_FONT}"
-git clone https://github.com/springone-tour-2020-cicd/go-demo-app-ops.git && cd go-demo-app-ops
+git clone git@github.com:springone-tour-2020-cicd/go-demo-app-ops.git && cd go-demo-app-ops
 git reset --hard 6c9bb8d
 git push -f
 cd ~/workspace-demo

@@ -23,11 +23,11 @@ echo -e "${PURPLE}###### Cloning demorunner${RESET_FONT}"
 git clone git@github.com:mgbrodi/demorunner.git ~/workspace-demo/demorunner
 
 echo -e "${PURPLE}###### Setting up APP repo${RESET_FONT}"
-git clone https://github.com/springone-tour-2020-cicd/go-demo-app.git && cd go-demo-app
+git clone git@github.com:springone-tour-2020-cicd/go-demo-app.git && cd go-demo-app
 cd ~/workspace-demo
 
 echo -e "${PURPLE}###### Setting up OPS repo${RESET_FONT}"
-git clone https://github.com/springone-tour-2020-cicd/go-demo-app-ops.git && cd go-demo-app-ops
+git clone git@github.com:springone-tour-2020-cicd/go-demo-app-ops.git && cd go-demo-app-ops
 cd ~/workspace-demo
 
 echo -e "${PURPLE}###### Setting up webhook scripts${RESET_FONT}"

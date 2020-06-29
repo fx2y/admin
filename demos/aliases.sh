@@ -32,3 +32,5 @@ alias cicd5="source demorunner.sh \$ADMIN/demos/5-workflow-automation/demo.txt"
 alias cicd6="source demorunner.sh \$ADMIN/demos/6-automatic-deployment/demo.txt"
 alias cicd7="source demorunner.sh \$ADMIN/demos/7-final-workflow/demo.txt"
 alias cicd8="source demorunner.sh \$ADMIN/demos/8-jenkinsx/demo.txt"
+
+alias dclean='docker ps -a -q | xargs -n1 docker stop; docker system prune -af'

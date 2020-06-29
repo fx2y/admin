@@ -42,5 +42,5 @@ trap 'echo -n "$normalcol"' DEBUG
 PS1="\n\[$promptcol\]\w\$ \[$cmdcol\]"
 
 echo -e "${YELLOW}###### Setting up demorunner${RESET_FONT}"
-export DEMO_DELAY=0
+export DEMO_DELAY=15
 PATH=~/workspace-demo/demorunner:$PATH
