@@ -1,11 +1,12 @@
 clear
 cd ~/workspace-demo/go-demo-app-ops/cicd/kpack-demo
-kns default
 
 k apply -f ../kpack/sa.yaml
 
+tabname demo-kpack
+clear
 @_ECHO_ON
-
+kns default
 # kpack CRDs
 k api-resources --api-group build.pivotal.io
 k api-resources --api-group experimental.kpack.pivotal.io

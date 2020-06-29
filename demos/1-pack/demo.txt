@@ -19,6 +19,7 @@ git clone https://github.com/buildpacks/samples.git buildpack-samples
 # Check which process is on port 8080:
 lsof -i :8080 | grep LISTEN
 
+tabname demo-buildpacks
 cd go-demo-app
 clear
 @_ECHO_ON
