@@ -28,6 +28,6 @@ cd ~/workspace-demo
 
 echo -e "${PURPLE}###### Resetting OPS repo${RESET_FONT}"
 git clone https://github.com/springone-tour-2020-cicd/go-demo-app-ops.git && cd go-demo-app-ops
-git reset --hard 57f2c76
+git reset --hard 6c9bb8d
 git push -f
 cd ~/workspace-demo
