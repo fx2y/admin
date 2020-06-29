@@ -31,7 +31,7 @@ git clone https://github.com/springone-tour-2020-cicd/go-demo-app-ops.git && cd 
 cd ~/workspace-demo
 
 echo -e "${PURPLE}###### Setting up webhook scripts${RESET_FONT}"
-cp ${ADMIN}/demos/6-workflow-automation/create_github_webhook.sh ~/create_github_webhook.sh
-cp ${ADMIN}/demos/6-workflow-automation/create_dockerhub_webhook.sh ~/create_dockerhub_webhook.sh
+cp ${ADMIN}/demos/5-workflow-automation/create_github_webhook.sh ~/create_github_webhook.sh
+cp ${ADMIN}/demos/5-workflow-automation/create_dockerhub_webhook.sh ~/create_dockerhub_webhook.sh
 chmod +x ~/create_github_webhook.sh
 chmod +x ~/create_dockerhub_webhook.sh
