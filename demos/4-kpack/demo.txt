@@ -1,46 +1,45 @@
 clear
-cd ~/workspace-demo/go-demo-app-ops/cicd/kpack
+cd ~/workspace-demo/go-demo-app-ops/cicd/kpack-demo
 kns default
+
+k apply -f ../kpack/sa.yaml
 
 @_ECHO_ON
 
+# kpack CRDs
 k api-resources --api-group build.pivotal.io
+k api-resources --api-group experimental.kpack.pivotal.io
 
-yqc builder.yaml
-yqc image.yaml
+# Simple setup
+yqc ../kpack/builder.yaml
+yqc ../image/image.yaml
 
-k apply -f builder.yaml -f image.yaml
+# Piece-meal setup (CustomBuilder)
 
-k get builds
-k describe build
-k get pods
+yqc -d 0 cb.yaml; yqc -d 1 cb.yaml; yqc -d 2 cb.yaml
 
-# logs -image go-demo-app -build 1
-
-yqc -d 0 custom-builder.yaml
-yqc -d 1 custom-builder.yaml
-yqc -d 2 custom-builder.yaml
-
-k apply -f custom-builder.yaml
-
+k apply -f cb.yaml
 k get custombuilder
 
-## Build images
+# Images
 
-catd image.yaml image-1.yaml
-catd image.yaml image-2.yaml
-catd image.yaml image-3.yaml
+yqc img-1.yaml
 
-k apply -f image-1.yaml -f image-2.yaml -f image-3.yaml
+k apply -f img-1.yaml -f img-2.yaml -f img-3.yaml
+
+k get builds
+
+k describe build
+
+# Rebase images
+
+sed -i '' 's/run:0.0.19-base-cnb/run:0.0.20-base-cnb/g' cb.yaml
+k apply -f cb.yaml
+
 k get builds
 k describe build
-logs -image go-demo-app-1 -build 1
 
-## Rebase images
+#logs -image demo-img-1 -build 2
 
-sed -i '' 's/run:0.0.19-base-cnb/run:0.0.20-base-cnb/g' custom-builder.yaml
-k apply -f custom-builder.yaml
-logs -image go-demo-app-1 -build 2
-k describe build
-
-# Result: kpack checks image.yaml and pushes to Docker Hub
+k delete -f .
+@_SKIP# Result: kpack checks image.yaml and pushes to Docker Hub
