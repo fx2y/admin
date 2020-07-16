@@ -9,7 +9,7 @@ docker volume prune -f
 
 docker pull gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
 docker pull paketobuildpacks/run:base-cnb
-docker pull buildpacksio/lifecycle:0.8.0
+docker pull buildpacksio/lifecycle:0.8.1
 pack set-default-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
 
 rm -rf buildpack-samples
