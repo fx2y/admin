@@ -1,8 +1,9 @@
+#_ECHO_OFF
 clear
 cd ~/workspace-demo/go-demo-app
-@_ECHO_ON
+#_ECHO_ON
 
-# Initial deploy
+#_ECHO_# Initial deploy
 
 mkdir ops
 kubectl create deployment go-demo-app --image=$IMG_NS/go-demo-app:pack-1.0.0 -n dev --dry-run=client -o yaml > deployment.yaml
@@ -18,7 +19,7 @@ k get all
 #curl localhost:8080
 #pkill kubectl && wait $!
 
-# Promote to prod
+#_ECHO_# Promote to prod
 
 k create deployment go-demo-app --image=$IMG_NS/go-demo-app:pack-1.0.0 -n prod --dry-run=client -o yaml > deployment-prod.yaml
 k create service clusterip go-demo-app --tcp=8080:8080 -n prod --dry-run=client -o yaml > service-prod.yaml
@@ -29,7 +30,7 @@ k port-forward svc/go-demo-app 8080 2>&1 > /dev/null &
 curl localhost:8080
 pkill kubectl && wait $!
 
-# Remove duplication
+#_ECHO_# Remove duplication
 
 catd deployment.yaml deployment-prod.yaml
 catd service.yaml service-prod.yaml

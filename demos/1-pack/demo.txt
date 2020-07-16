@@ -1,4 +1,4 @@
-@_ECHO_OFF
+#_ECHO_OFF
 
 cd ~/workspace-demo
 
@@ -23,34 +23,34 @@ lsof -i :8080 | grep LISTEN
 
 tabname demo-buildpacks
 clear
-@_ECHO_ON
+#_ECHO_ON
 
-# Sample app
+#_ECHO_# Sample app
 ls
 go run hello-server.go 2>&1 > /dev/null &
 curl localhost:8080
 pkill hello-server && wait $!
 
 clear
-# Dockerfile (docker build -f Dockerfile ...)
+#_ECHO_# Dockerfile (docker build -f Dockerfile ...)
 bat Dockerfile
 
-# Buildpacks (tool + lifecycle + buildpacks)
+#_ECHO_# Buildpacks (tool + lifecycle + buildpacks)
 pack set-default-builder gcr.io/paketo-buildpacks/builder:base-platform-api-0.3
 pack build go-demo-app --no-pull
 docker images
 
-@_SKIP# Custom buildpacks
-@_SKIPpack build go-demo-app --buildpack from=builder --buildpack ../buildpack-samples/buildpacks/hello-world
+# Custom buildpacks
+#pack build go-demo-app --buildpack from=builder --buildpack ../buildpack-samples/buildpacks/hello-world
 
 clear
-# Transparency
+#_ECHO_# Transparency
 pack inspect-image go-demo-app
-@_SKIPpack inspect-image go-demo-app --bom | jq
+#pack inspect-image go-demo-app --bom | jq
 pack inspect-builder
 
 clear
-# OS patching
+#_ECHO_# OS patching
 docker pull gcr.io/paketo-buildpacks/run:0.0.19-base-cnb
 docker tag gcr.io/paketo-buildpacks/run:0.0.19-base-cnb paketobuildpacks/run:base-cnb
 docker images
@@ -59,10 +59,10 @@ catd <(docker inspect ff0bc5ced021) <(docker inspect go-demo-app) | tail -n20
 
 clear
 
-@_ECHO_OFF
+#_ECHO_OFF
 docker tag go-demo-app $IMG_NS/go-demo-app:pack-1.0.0
-@_ECHO_ON
-# Publish
+#_ECHO_ON
+#_ECHO_# Publish
 pack build $IMG_NS/go-demo-app:pack-1.0.0 --no-pull --publish
 
-@_SKIP# Result: Docker Hub contains go-demo-app:pack-1.0.0
+# Result: Docker Hub contains go-demo-app:pack-1.0.0

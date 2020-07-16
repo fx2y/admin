@@ -1,6 +1,7 @@
+#_ECHO_OFF
 clear
 cd ~/workspace-demo/go-demo-app-ops/cicd/tekton
-@_ECHO_ON
+#_ECHO_ON
 
 yqc ops-dev-trigger-binding.yaml
 yqc ops-dev-pipeline.yaml
@@ -37,7 +38,7 @@ git push origin master
 
 tkn pr list
 tkn pr logs -f
-# Docker Hub should trigger ops-dev pipeline
+#_ECHO_# Docker Hub should trigger ops-dev pipeline
 tkn pr list
 tkn pr logs -f
 

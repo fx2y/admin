@@ -1,20 +1,21 @@
+#_ECHO_OFF
 clear
 cd ~/workspace-demo/go-demo-app-ops/cicd/tekton
 k apply -f pvc.yaml -f sa.yaml
-@_ECHO_ON
+#_ECHO_ON
 
 k api-resources --api-group='tekton.dev'
 kns tekton-pipelines
 
 yqc build-pipeline.yaml
 
-# Go to https://github.com/tektoncd/catalog
+#_ECHO_# Go to https://github.com/tektoncd/catalog
 
 tkn task list
 
-# Observe parameters and placeholders in the Tasks on GitHub
+#_ECHO_# Observe parameters and placeholders in the Tasks on GitHub
 
-# Automate triggering
+#_ECHO_# Automate triggering
 
 yqc build-event-listener.yaml
 yqc build-trigger-template.yaml
@@ -39,7 +40,7 @@ yqc argo-deploy-tekton.yaml
 kns argocd
 k apply -f .
 
-# Test it out
+#_ECHO_# Test it out
 
 cd ../../../go-demo-app
 sed -i '' 's/cnbp/s1t/g' hello-server.go
@@ -66,4 +67,4 @@ k get deploy
 k port-forward svc/dev-go-demo-app 8083:8080 &
 curl localhost:8083
 
-# Argo UI
+#_ECHO_# Argo UI

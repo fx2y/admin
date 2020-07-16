@@ -1,31 +1,31 @@
-@_ECHO_OFF
+#_ECHO_OFF
 
 cd ~/workspace-demo/go-demo-app-ops/cicd/argo
 
-#### PORT FORWARD IN ANOTHER WINDOW BEFORE RUNNING THIS SCRIPT
-@_SKIPk port-forward svc/argocd-server 9090:80 -n argocd
-@_SKIPk port-forward svc/argocd-server 9090:80 -n argocd 2>&1 > /dev/null &
+# PORT FORWARD IN ANOTHER WINDOW BEFORE RUNNING THIS SCRIPT
+#k port-forward svc/argocd-server 9090:80 -n argocd
+#k port-forward svc/argocd-server 9090:80 -n argocd 2>&1 > /dev/null &
 
-#### MAKE SURE TO PORT-FORWARD FIRST BEFORE RUNNING THIS SCRIPT SO THAT CLI LOGIN WORKS
+# MAKE SURE TO PORT-FORWARD FIRST BEFORE RUNNING THIS SCRIPT SO THAT CLI LOGIN WORKS
 ARGOCD_PASSWORD="$(kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server -o name | cut -d'/' -f 2)"
 argocd login localhost:9090 --insecure --username admin --password "${ARGOCD_PASSWORD}"
 
 tabname demo-argo
 clear
-@_ECHO_ON
+#_ECHO_ON
 kns argocd
-# ArgoCD CRDs
+#_ECHO_# ArgoCD CRDs
 k api-resources --api-group argoproj.io
 
-# Application
+#_ECHO_# Application
 
 yqc argo-deploy-dev.yaml
 
-# Deployment - CD/"sync"
+#_ECHO_# Deployment - CD/"sync"
 
 k apply -f argo-deploy-dev.yaml
 
-# Edit state - CO (divergence)
+#_ECHO_# Edit state - CO (divergence)
 
 cd ../../ops/overlays/dev/
 yq w -i kustomization.yaml namePrefix dev-
@@ -36,7 +36,7 @@ argocd app list
 
 argocd app list
 
-# CO - Prune/Self-heal
+#_ECHO_# CO - Prune/Self-heal
 
 cd -
 k apply -f argo-deploy-prod.yaml
@@ -47,4 +47,4 @@ k delete deploy prod-go-demo-app; kubectl get rs
 
 argocd app list
 
-@_SKIP# Result: dev/prod-go-demo-app installed and kept up-to-date
+# Result: dev/prod-go-demo-app installed and kept up-to-date

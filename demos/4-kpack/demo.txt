@@ -1,3 +1,4 @@
+#_ECHO_OFF
 clear
 cd ~/workspace-demo/go-demo-app-ops/cicd/kpack-demo
 
@@ -5,24 +6,24 @@ k apply -f ../kpack/sa.yaml
 
 tabname demo-kpack
 clear
-@_ECHO_ON
+#_ECHO_ON
 kns default
-# kpack CRDs
+#_ECHO_# kpack CRDs
 k api-resources --api-group build.pivotal.io
 k api-resources --api-group experimental.kpack.pivotal.io
 
-# Simple setup
+#_ECHO_# Simple setup
 yqc ../kpack/builder.yaml
 yqc ../image/image.yaml
 
-# Piece-meal setup (CustomBuilder)
+#_ECHO_# Piece-meal setup (CustomBuilder)
 
 yqc -d 0 cb.yaml; yqc -d 1 cb.yaml; yqc -d 2 cb.yaml
 
 k apply -f cb.yaml
 k get custombuilder
 
-# Images
+#_ECHO_# Images
 
 yqc img-1.yaml
 
@@ -32,7 +33,7 @@ k get builds
 
 k describe build
 
-# Rebase images
+#_ECHO_# Rebase images
 
 sed -i '' 's/run:0.0.19-base-cnb/run:0.0.20-base-cnb/g' cb.yaml
 k apply -f cb.yaml
@@ -40,7 +41,8 @@ k apply -f cb.yaml
 k get builds
 k describe build
 
-#logs -image demo-img-1 -build 2
+#_ECHO_#logs -image demo-img-1 -build 2
 
 k delete -f .
-@_SKIP# Result: kpack checks image.yaml and pushes to Docker Hub
+
+# Result: kpack checks image.yaml and pushes to Docker Hub

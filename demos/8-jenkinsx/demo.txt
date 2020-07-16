@@ -1,13 +1,13 @@
-@_ECHO_ON
+#_ECHO_ON
 jx edit pipelineusername
 
-# DEMO
+#_ECHO_# DEMO
 k get deploy
 jx ui -p 8080 2>&1 > /dev/null &
 JX_PID=$!
 jx get env
 jx create quickstart
-# Open repository in GitHub.com
+#_ECHO_# Open repository in GitHub.com
 # Take a look at the main.go file
 # Explain quickstart:
 # - Language detection => Dockerfile creation

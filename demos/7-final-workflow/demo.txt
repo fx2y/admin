@@ -28,7 +28,7 @@ git push origin master
 kns argocd
 k apply -f
 
-# Test it out
+#_ECHO_# Test it out
 
 cd ../../../go-demo-app
 sed -i '' 's/cnbp/s1t/g' hello-server.go
@@ -55,4 +55,4 @@ k get deploy
 k port-forward svc/dev-go-demo-app 8083:8080 &
 curl localhost:8083
 
-# Argo UI
+#_ECHO_# Argo UI
